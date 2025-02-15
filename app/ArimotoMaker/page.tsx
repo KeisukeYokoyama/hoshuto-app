@@ -20,12 +20,21 @@ export default function Arimoto() {
     sound2Ref.current = new Audio('/sounds/sound_02.mp3');
     drumrollRef.current = new Audio('/sounds/drumroll.mp3');
 
+    // 各音声ファイルの設定
+    [sound1Ref, sound2Ref, drumrollRef].forEach(ref => {
+      if (ref.current) {
+        ref.current.preload = 'auto';  // プリロードを設定
+        ref.current.load();  // 明示的にロード
+      }
+    });
+
     // コンポーネントのアンマウント時にクリーンアップ
     return () => {
       [sound1Ref, sound2Ref, drumrollRef].forEach(ref => {
         if (ref.current) {
           ref.current.pause();
           ref.current.currentTime = 0;
+          ref.current.src = '';  // ソースをクリア
         }
       });
     };
@@ -74,9 +83,13 @@ export default function Arimoto() {
 
   const playSound = async (audio: HTMLAudioElement) => {
     try {
+      // 再生前に完全に停止させる
+      audio.pause();
       audio.currentTime = 0;
       // iOS対応：音量を明示的に設定
       audio.volume = 1.0;
+      // プリロードの設定を追加
+      audio.load();
       await audio.play();
     } catch (error) {
       console.error('音声の再生に失敗しました:', error);
