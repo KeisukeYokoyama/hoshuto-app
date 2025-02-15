@@ -164,17 +164,17 @@ export default function Arimoto() {
                 >
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     {displayText && (
-                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2 text-center">
                         {displayText}
                       </span>
                     )}
                     {!isShuffling && displayText && displayTextEnd && (
-                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2 text-center">
                         したがいまして、
                       </span>
                     )}
                     {displayTextEnd && (
-                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2 text-center">
                         {displayTextEnd}
                       </span>
                     )}
