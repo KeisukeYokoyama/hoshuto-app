@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { sentensData } from "../data/sentensData";
 
 export default function Arimoto() {
-  const [inputText, setInputText] = useState("");
   const [isShuffling, setIsShuffling] = useState(false);
   const [displayText, setDisplayText] = useState("");
   const [displayTextEnd, setDisplayTextEnd] = useState("");
@@ -80,8 +79,7 @@ export default function Arimoto() {
         if (drumrollRef.current) {
           await playSound(drumrollRef.current);
           
-          // ドラムロールの長さを取得し、終了2秒前にタイマーを設定
-          const drumrollDuration = (drumrollRef.current.duration * 1000) - 1800;
+          const drumrollDuration = (drumrollRef.current.duration * 1000) - 2000;
           setTimeout(() => {
             setIsShuffling(false);
             const finalIndex = Math.floor(Math.random() * sentensData.length);
@@ -90,7 +88,6 @@ export default function Arimoto() {
             const finalTextEnd = sentensData[finalIndexEnd].text;
             setDisplayText(finalText);
             setDisplayTextEnd(finalTextEnd);
-            setInputText(finalText);
           }, drumrollDuration);
         }
       }, duration);
