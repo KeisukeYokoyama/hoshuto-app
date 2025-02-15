@@ -56,7 +56,7 @@ export const sentensData = [
   {
     id: 10,
     text: "若い娘と混浴したいなぁ",
-    speech: "若い娘と混浴したいなぁ",
+    speech: "若いこと混浴したいなぁ",
     speaker: "代表",
   },
   {
@@ -122,7 +122,7 @@ export const sentensData = [
   {
     id: 21,
     text: "日本保守党のネガキャンはお止めなさい！",
-    speech: "日本保守党のネガキャンはお止めなさい！",
+    speech: "日本保守党のネガキャンはおやめなさい！",
     speaker: "事務総長",
   },
   {
