@@ -90,7 +90,6 @@ export default function Arimoto() {
             const finalTextEnd = sentensData[finalIndexEnd].text;
             setDisplayText(finalText);
             setDisplayTextEnd(finalTextEnd);
-            setInputText(finalText);
           }, drumrollDuration);
         }
       }, duration);
