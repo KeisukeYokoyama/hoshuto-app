@@ -53,8 +53,6 @@ export const sentensData = [
     speech: "私の見間違いならごめんなさい。",
     speaker: "事務総長",
   },
-  
-  
-  
+
   
 ];

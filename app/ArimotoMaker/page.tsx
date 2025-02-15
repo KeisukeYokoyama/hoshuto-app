@@ -1,33 +1,40 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { sentensData } from "../data/sentensData";
 
 export default function Arimoto() {
   const [inputText, setInputText] = useState("");
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [displayText, setDisplayText] = useState("");
 
-  // 入力テキスト
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputText(e.target.value);
-  };
+  // シャッフルアニメーション
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
 
-  // 音声再生
-  const playSound = async () => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    
-    const soundNumber = Math.random() < 0.5 ? '01' : '02';
-    const firstSound = new Audio(`/sounds/sound_${soundNumber}.mp3`);
-    const drumroll = new Audio('/sounds/drumroll.mp3');
-    
-    await firstSound.play();
-    firstSound.addEventListener('ended', () => {
-      drumroll.play();
-      drumroll.addEventListener('ended', () => {
-        setIsPlaying(false);
-      });
-    });
+    if (isShuffling) {
+      intervalId = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * sentensData.length);
+        setDisplayText(sentensData[randomIndex].text);
+      }, 50);
+    }
+
+    // クリーンアップ関数
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isShuffling]);
+
+  // ボタンクリックハンドラー
+  const handleButtonClick = () => {
+    if (isShuffling) {
+      setIsShuffling(false);
+      setInputText(displayText);
+    } else {
+      setIsShuffling(true);
+    }
   };
 
   return (
@@ -41,27 +48,19 @@ export default function Arimoto() {
           <label htmlFor="inputText" className="text-sm font-bold">
             上の句を入力してください
           </label>
-          <input
-            type="text"
-            id="inputText"
-            className="w-full p-2 border rounded-md my-2"
-            value={inputText}
-            onChange={handleInputChange}
-          />
+          <div className="w-full p-2 border rounded-md my-2 min-h-[40px]">
+            {displayText || inputText}
+          </div>
         </div>
         <div>
           <label htmlFor="outputText" className="text-sm font-bold">
             ボタンをクリックしてください
           </label>
           <button 
-            className={`bg-blue-500 text-white px-4 py-2 rounded-md block mt-2 ${
-              isPlaying ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            id="outputText"
-            onClick={playSound}
-            disabled={isPlaying}
+            className="bg-blue-500 text-white px-4 py-2 rounded-md block mt-2"
+            onClick={handleButtonClick}
           >
-            したがいまして
+            {isShuffling ? 'ストップ' : 'スタート'}
           </button>
         </div>
       </main>
