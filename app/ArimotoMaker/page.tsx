@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { sentensData } from "../data/sentensData";
+import { sentensData } from "../data/ArimotoMaker/sentensData";
 
 export default function Arimoto() {
   const [isShuffling, setIsShuffling] = useState(false);
