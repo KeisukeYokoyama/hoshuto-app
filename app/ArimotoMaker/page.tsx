@@ -7,6 +7,12 @@ export default function Arimoto() {
   const [inputText, setInputText] = useState("");
   const [isShuffling, setIsShuffling] = useState(false);
   const [displayText, setDisplayText] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  // クライアントサイドでのマウント確認のみを行う
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // シャッフルアニメーション
   useEffect(() => {
@@ -38,31 +44,36 @@ export default function Arimoto() {
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl font-bold">有本構文メーカー</h1>
-        <p className="text-base">
-          有本構文メーカーは、有本構文を作成するためのツールです。
-        </p>
-        <div className="w-full">
-          <label htmlFor="inputText" className="text-sm font-bold">
-            上の句を入力してください
-          </label>
-          <div className="w-full p-2 border rounded-md my-2 min-h-[40px]">
-            {displayText || inputText}
-          </div>
-        </div>
-        <div>
-          <label htmlFor="outputText" className="text-sm font-bold">
-            ボタンをクリックしてください
-          </label>
-          <button 
-            className="bg-blue-500 text-white px-4 py-2 rounded-md block mt-2"
-            onClick={handleButtonClick}
-          >
-            {isShuffling ? 'ストップ' : 'スタート'}
-          </button>
-        </div>
+    <div className="justify-items-center min-h-screen px-6 py-8 gap-16 sm:p-20">
+      <main className="flex flex-col gap-8 items-center sm:items-start">
+        {isClient && (
+          <>
+            <h1 className="text-4xl font-bold">有本構文メーカー</h1>
+            <p className="text-base">
+              有本構文を生成するための愛国ツールです。
+            </p>
+            <div>
+              <button 
+                className="bg-gray-900 text-white px-4 py-2 rounded-md block"
+                onClick={handleButtonClick}
+              >
+                {isShuffling ? 'ストップ' : 'したがいまして'}
+              </button>
+            </div>
+            <div className="w-full relative">
+              <div 
+                className="w-full h-[200px] bg-cover bg-center"
+                style={{ backgroundImage: "url('/images/background01.png')" }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                    {displayText || inputText || ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
