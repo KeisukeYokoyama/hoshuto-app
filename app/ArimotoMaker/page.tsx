@@ -75,6 +75,8 @@ export default function Arimoto() {
   const playSound = async (audio: HTMLAudioElement) => {
     try {
       audio.currentTime = 0;
+      // iOS対応：音量を明示的に設定
+      audio.volume = 1.0;
       await audio.play();
     } catch (error) {
       console.error('音声の再生に失敗しました:', error);
