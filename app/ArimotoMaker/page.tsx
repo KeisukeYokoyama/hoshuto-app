@@ -33,6 +33,25 @@ export default function Arimoto() {
 
   useEffect(() => {
     setIsClient(true);
+
+    // iOS向けの音声API初期化
+    const initSpeech = () => {
+      const dummyUtterance = new SpeechSynthesisUtterance('');
+      speechSynthesis.speak(dummyUtterance);
+    };
+    
+    if ('ontouchend' in document) {
+      document.addEventListener('touchend', initSpeech, { once: true });
+    } else {
+      initSpeech();
+    }
+
+    // クリーンアップ関数
+    return () => {
+      if ('ontouchend' in document) {
+        document.removeEventListener('touchend', initSpeech);
+      }
+    };
   }, []);
 
   // シャッフルアニメーション
