@@ -42,9 +42,7 @@ export default function Arimoto() {
     if (isShuffling) {
       intervalId = setInterval(() => {
         const randomIndex = Math.floor(Math.random() * sentensData.length);
-        const randomIndexEnd = Math.floor(Math.random() * sentensData.length);
         setDisplayText(sentensData[randomIndex].text);
-        setDisplayTextEnd(sentensData[randomIndexEnd].text);
       }, 50);
     }
 
@@ -67,19 +65,18 @@ export default function Arimoto() {
   const handleButtonClick = async () => {
     if (!isShuffling && sound1Ref.current && sound2Ref.current && drumrollRef.current) {
       setIsShuffling(true);
+      setDisplayTextEnd("");
       
       const selectedSound = Math.random() < 0.5 ? sound1Ref.current : sound2Ref.current;
       
-      // 最初の音声を再生
       await playSound(selectedSound);
       
-      // 音声の長さを取得して、その後にドラムロールを再生
       const duration = selectedSound.duration * 1000 || 1000;
       setTimeout(async () => {
         if (drumrollRef.current) {
           await playSound(drumrollRef.current);
           
-          const drumrollDuration = (drumrollRef.current.duration * 1000) - 2000;
+          const drumrollDuration = (drumrollRef.current.duration * 1000) - 1800;
           setTimeout(() => {
             setIsShuffling(false);
             const finalIndex = Math.floor(Math.random() * sentensData.length);
@@ -88,6 +85,16 @@ export default function Arimoto() {
             const finalTextEnd = sentensData[finalIndexEnd].text;
             setDisplayText(finalText);
             setDisplayTextEnd(finalTextEnd);
+
+            // テキスト表示後、1秒待ってから音声読み上げを開始
+            setTimeout(() => {
+              const utterance = new SpeechSynthesisUtterance();
+              utterance.text = `${sentensData[finalIndex].speech}。したがいまして、${sentensData[finalIndexEnd].speech}`;
+              utterance.lang = 'ja-JP';
+              utterance.rate = 1.0;
+              utterance.pitch = 1.0;
+              window.speechSynthesis.speak(utterance);
+            }, 800);
           }, drumrollDuration);
         }
       }, duration);
@@ -96,11 +103,11 @@ export default function Arimoto() {
 
   return (
     <div className="justify-items-center px-6 py-8 gap-16 sm:p-20">
-      <main className="flex flex-col gap-8 items-center sm:items-start">
+      <main className="flex flex-col gap-8 items-center max-w-2xl mx-auto w-full">
         {isClient && (
           <>
-            <h1 className="text-4xl font-bold">有本構文メーカー</h1>
-            <p className="text-base">
+            <h1 className="text-4xl font-bold text-center">有本構文メーカー</h1>
+            <p className="text-base text-center">
               有本構文を生成するための愛国ツールです。
             </p>
             <div className="flex justify-center w-full">
@@ -115,21 +122,21 @@ export default function Arimoto() {
             <div className="w-full relative">
               {(displayText || isShuffling) && (
                 <div 
-                  className={`w-full h-[200px] bg-cover bg-center ${!isShuffling ? "bg-[url('/images/background01.png')]" : "bg-gray-800"}`}
+                  className={`w-full aspect-[16/9] max-h-[600px] min-h-[200px] bg-cover bg-center ${!isShuffling ? "bg-[url('/images/background01.png')]" : "bg-gray-800"}`}
                 >
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     {displayText && (
-                      <span className="text-xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
                         {displayText}
                       </span>
                     )}
                     {!isShuffling && displayText && displayTextEnd && (
-                      <span className="text-xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
                         したがいまして、
                       </span>
                     )}
                     {displayTextEnd && (
-                      <span className="text-xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
+                      <span className="sm:text-4xl text-2xl font-bold text-white [text-shadow:_2px_2px_1px_rgb(0_0_0_/_75%)] bg-gray-700 bg-opacity-10 px-4 py-2">
                         {displayTextEnd}
                       </span>
                     )}
