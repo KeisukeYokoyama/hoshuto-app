@@ -113,7 +113,7 @@ export default function Arimoto() {
               utterance.rate = 1.0;
               utterance.pitch = 1.0;
               window.speechSynthesis.speak(utterance);
-            }, 800);
+            }, 500);
           }, drumrollDuration);
         }
       }, duration);
