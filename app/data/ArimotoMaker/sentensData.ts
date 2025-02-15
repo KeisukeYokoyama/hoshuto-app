@@ -227,5 +227,11 @@ export const sentensData = [
     speech: "SFやで。SFやで。SFやで。",
     speaker: "代表",
   },
-  
+  {
+    id: 39,
+    text: "日本保守党は揺るぎません。",
+    speech: "S日本保守党は揺るぎません。",
+    speaker: "代表",
+  },
+
 ];
