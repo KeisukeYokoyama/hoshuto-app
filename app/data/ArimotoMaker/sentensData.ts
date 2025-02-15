@@ -230,7 +230,7 @@ export const sentensData = [
   {
     id: 39,
     text: "日本保守党は揺るぎません。",
-    speech: "S日本保守党は揺るぎません。",
+    speech: "日本保守党は揺るぎません。",
     speaker: "代表",
   },
 
