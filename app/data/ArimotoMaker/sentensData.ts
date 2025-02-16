@@ -85,8 +85,8 @@ export const sentensData = [
   },
   {
     id: 15,
-    text: "呆",
-    speech: "ほう",
+    text: "法的措置を検討します",
+    speech: "法的措置を検討します",
     speaker: "事務総長",
   },
   {
@@ -127,9 +127,9 @@ export const sentensData = [
   },
   {
     id: 22,
-    text: "コバ呆け",
-    speech: "コバほうけ",
-    speaker: "島田洋一",
+    text: "党員はわしの子供やないで",
+    speech: "党員はわしの子供やないで",
+    speaker: "代表",
   },
   {
     id: 23,
