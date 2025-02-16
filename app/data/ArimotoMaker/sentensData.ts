@@ -68,7 +68,7 @@ export const sentensData = [
   {
     id: 12,
     text: "なんやあのオバハン、ほんま腹立つ",
-    speech: "なんやあのオバハン、ほんま腹立つ",
+    speech: "なんやあのオバハン、ほんま腹たつ",
     speaker: "代表",
   },
   {
@@ -278,7 +278,7 @@ export const sentensData = [
   {
     id: 47,
     text: "上海電力と大阪府の関係を真剣に調べると言い出した。",
-    speech: "上海電力と大阪府の関係を真剣に調べると言い出した。",
+    speech: "しゃんはい電力と大阪府の関係を真剣に調べると言い出した。",
     speaker: "事務総長",
   },
   {
@@ -296,7 +296,7 @@ export const sentensData = [
   {
     id: 50,
     text: "足立康史こそ、正真正銘のバカ。",
-    speech: "足立康史こそ、正真正銘のバカ。",
+    speech: "足立やすしこそ、正真正銘のバカ。",
     speaker: "事務総長",
   },
   {
@@ -308,7 +308,7 @@ export const sentensData = [
   {
     id: 52,
     text: "あたし行ったら特別に出してくれる？生レバ。",
-    speech: "あたし行ったら特別に出してくれる？生レバ。",
+    speech: "あたしいったら特別に出してくれる？生レバ。",
     speaker: "事務総長",
   },
   {
