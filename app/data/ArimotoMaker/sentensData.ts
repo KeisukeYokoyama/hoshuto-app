@@ -329,5 +329,12 @@ export const sentensData = [
     speech: "やだマスター。私でさえ忘れてたのにー。わら",
     speaker: "事務総長",
   },
+  {
+    id: 56,
+    text: "甘えるな無礼者。",
+    speech: "甘えるな無礼者。",
+    speaker: "事務総長",
+  },
+  
 
 ];
