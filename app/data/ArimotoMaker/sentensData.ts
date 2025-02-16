@@ -332,7 +332,7 @@ export const sentensData = [
   {
     id: 56,
     text: "甘えるな無礼者。",
-    speech: "甘えるな無礼者。",
+    speech: "甘えるな無礼もの。",
     speaker: "事務総長",
   },
   {
@@ -341,7 +341,10 @@ export const sentensData = [
     speech: "もう歯止めがきかないのね。",
     speaker: "事務総長",
   },
-  
-  
-
+  {
+    id: 58,
+    text: "足立康史議員と維新に関するネタ、随時投入していこうか。",
+    speech: "足立やすし議員と維新に関するネタ、随時投入していこうか。",
+    speaker: "事務総長",
+  },
 ];
