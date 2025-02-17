@@ -9,6 +9,12 @@ export default function Arimoto() {
   const [displayTextEnd, setDisplayTextEnd] = useState("");
   const [isClient, setIsClient] = useState(false);
 
+  // 背景画像のプリロード用のuseEffectを追加
+  useEffect(() => {
+    const preloadImage = new Image();
+    preloadImage.src = '/images/background01.png';
+  }, []);
+
   // 音声オブジェクトの参照を保持
   const sound1Ref = useRef<HTMLAudioElement | null>(null);
   const sound2Ref = useRef<HTMLAudioElement | null>(null);
