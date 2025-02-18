@@ -46,7 +46,7 @@ export default function Karuta() {
     };
 
     return (
-        <div className="text-center p-4">
+        <div className="text-center px-4 pt-12">
             <h1 className="text-5xl font-bold text-[#E75B66] font-zen-maru-gothic mb-8">保守党かるた</h1>
             
             <div className="mb-4 cursor-pointer" onClick={() => setShowModal(true)}>
@@ -83,10 +83,10 @@ export default function Karuta() {
                                 className="object-contain"
                             />
                         </div>
-                        <div className="absolute top-[150px] left-6 w-[154px] text-xl font-bold">
+                        <div className="absolute top-[140px] left-4 w-[154px] text-xl font-bold">
                             {card.text}
                         </div>
-                        <div className="absolute top-[72px] right-8 w-8 h-8 rounded-full flex items-center justify-center font-serif text-4xl text-white">
+                        <div className="absolute top-[64px] right-7 w-8 h-8 rounded-full flex items-center justify-center font-serif text-4xl text-white">
                             {card.letter}
                         </div>
                     </div>
@@ -95,8 +95,14 @@ export default function Karuta() {
 
             {/* モーダル */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 pt-14">
-                    <div className="bg-white p-8 rounded-lg w-[90%] max-w-[500px]">
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 pt-14"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div 
+                        className="bg-white p-8 rounded-lg w-[90%] max-w-[500px]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-2xl font-bold">保守党かるたの遊び方</h2>
                             <button onClick={() => setShowModal(false)} className="text-3xl">&times;</button>
