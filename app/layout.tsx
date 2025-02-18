@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: '/images/ogp_card.png',
+        url: '/images/ArimotoMaker/ogp_card.png',
         width: 1200,
         height: 630,
       }
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: ['/images/ogp_card.png'],
+    images: ['/images/ArimotoMaker/ogp_card.png'],
   },
   metadataBase: new URL('https://hoshuto-app.vercel.app'),
   icons: {

@@ -12,7 +12,7 @@ export default function Arimoto() {
   // 背景画像のプリロード用のuseEffectを追加
   useEffect(() => {
     const preloadImage = new Image();
-    preloadImage.src = '/images/background01.png';
+    preloadImage.src = '/images/ArimotoMaker/background01.png';
   }, []);
 
   // 音声オブジェクトの参照を保持
@@ -22,9 +22,9 @@ export default function Arimoto() {
 
   // 音声オブジェクトの初期化
   useEffect(() => {
-    sound1Ref.current = new Audio('/sounds/sound_01.mp3');
-    sound2Ref.current = new Audio('/sounds/sound_02.mp3');
-    drumrollRef.current = new Audio('/sounds/drumroll.mp3');
+    sound1Ref.current = new Audio('/sounds/ArimotoMaker/sound_01.mp3');
+    sound2Ref.current = new Audio('/sounds/ArimotoMaker/sound_02.mp3');
+    drumrollRef.current = new Audio('/sounds/ArimotoMaker/drumroll.mp3');
 
     // 各音声ファイルの設定
     [sound1Ref, sound2Ref, drumrollRef].forEach(ref => {
@@ -165,7 +165,7 @@ export default function Arimoto() {
             <div className="w-full relative">
               {(displayText || isShuffling) && (
                 <div 
-                  className={`w-full aspect-[16/9] max-h-[600px] min-h-[200px] bg-cover bg-center ${!isShuffling ? "bg-[url('/images/background01.png')]" : "bg-gray-800"}`}
+                  className={`w-full aspect-[16/9] max-h-[600px] min-h-[200px] bg-cover bg-center ${!isShuffling ? "bg-[url('/images/ArimotoMaker/background01.png')]" : "bg-gray-800"}`}
                 >
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     {displayText && (
