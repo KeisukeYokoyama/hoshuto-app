@@ -104,8 +104,8 @@ export default function Karuta() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-bold">保守党かるたの遊び方</h2>
-                            <button onClick={() => setShowModal(false)} className="text-3xl">&times;</button>
+                            <h2 className="text-xl font-bold">保守党かるたの遊び方</h2>
+                            <button onClick={() => setShowModal(false)} className="text-xl -mt-12 -mr-4">&times;</button>
                         </div>
                         <div className="text-left">
                             <p className="mb-2">1. 音声をオンにしてください。</p>
