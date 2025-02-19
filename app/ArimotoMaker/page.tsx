@@ -8,11 +8,19 @@ export default function Arimoto() {
   const [displayText, setDisplayText] = useState("");
   const [displayTextEnd, setDisplayTextEnd] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState(1);
 
   // 背景画像のプリロード用のuseEffectを追加
   useEffect(() => {
-    const preloadImage = new Image();
-    preloadImage.src = '/images/ArimotoMaker/background01.png';
+    const preloadImages = [
+      '/images/ArimotoMaker/background01.png',
+      '/images/ArimotoMaker/background02.png'
+    ];
+
+    preloadImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
   }, []);
 
   // 音声オブジェクトの参照を保持
@@ -107,6 +115,9 @@ export default function Arimoto() {
       setIsShuffling(true);
       setDisplayTextEnd("");
       
+      // ランダムで背景画像を選択
+      setBackgroundImage(Math.random() < 0.5 ? 1 : 2);
+      
       const selectedSound = Math.random() < 0.5 ? sound1Ref.current : sound2Ref.current;
       
       await playSound(selectedSound);
@@ -165,7 +176,16 @@ export default function Arimoto() {
             <div className="w-full relative">
               {(displayText || isShuffling) && (
                 <div 
-                  className={`w-full aspect-[16/9] max-h-[600px] min-h-[200px] bg-cover bg-center ${!isShuffling ? "bg-[url('/images/ArimotoMaker/background01.png')]" : "bg-gray-800"}`}
+                  className={`w-full aspect-[16/9] max-h-[600px] min-h-[200px] bg-cover bg-center ${
+                    !isShuffling 
+                      ? `bg-[url('/images/ArimotoMaker/background0${backgroundImage}.png')]` 
+                      : "bg-gray-800"
+                  }`}
+                  style={{
+                    backgroundImage: !isShuffling 
+                      ? `url('/images/ArimotoMaker/background0${backgroundImage}.png')` 
+                      : 'none'
+                  }}
                 >
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     {displayText && (
