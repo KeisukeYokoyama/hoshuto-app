@@ -359,4 +359,10 @@ export const sentensData = [
     speech: "わし、シドニー・パウエルにほれたね ハート",
     speaker: "代表",
   },
+  {
+    id: 61,
+    text: "核心的なことってなんですか？",
+    speech: "核心的なことってなんですか？",
+    speaker: "事務総長",
+  },
 ];
