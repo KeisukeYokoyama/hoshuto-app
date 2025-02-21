@@ -26,12 +26,13 @@ export default function Arimoto() {
   // 音声オブジェクトの参照を保持
   const sound1Ref = useRef<HTMLAudioElement | null>(null);
   const sound2Ref = useRef<HTMLAudioElement | null>(null);
+  const sound3Ref = useRef<HTMLAudioElement | null>(null);
   const drumrollRef = useRef<HTMLAudioElement | null>(null);
-
   // 音声オブジェクトの初期化
   useEffect(() => {
     sound1Ref.current = new Audio('/sounds/ArimotoMaker/sound_01.mp3');
     sound2Ref.current = new Audio('/sounds/ArimotoMaker/sound_02.mp3');
+    sound3Ref.current = new Audio('/sounds/ArimotoMaker/sound_03.mp3');
     drumrollRef.current = new Audio('/sounds/ArimotoMaker/drumroll.mp3');
 
     // 各音声ファイルの設定
@@ -111,14 +112,16 @@ export default function Arimoto() {
   };
 
   const handleButtonClick = async () => {
-    if (!isShuffling && sound1Ref.current && sound2Ref.current && drumrollRef.current) {
+    if (!isShuffling && sound1Ref.current && sound2Ref.current && sound3Ref.current && drumrollRef.current) {
       setIsShuffling(true);
       setDisplayTextEnd("");
       
       // ランダムで背景画像を選択
       setBackgroundImage(Math.random() < 0.5 ? 1 : 2);
       
-      const selectedSound = Math.random() < 0.5 ? sound1Ref.current : sound2Ref.current;
+      // 3つの効果音からランダムに1つ選択
+      const sounds = [sound1Ref.current, sound2Ref.current, sound3Ref.current];
+      const selectedSound = sounds[Math.floor(Math.random() * sounds.length)];
       
       await playSound(selectedSound);
       
