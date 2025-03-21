@@ -35,6 +35,9 @@ export default function CocoIchiGame() {
   const requestRef = useRef<number | undefined>(undefined);
   const playerSize = { width: 120, height: 120 };
 
+  // 衝突済みのキャラクターを追跡するためのRef
+  const collidedIdsRef = useRef<Set<number>>(new Set());
+
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
     if (gameAreaRef.current) {
@@ -67,6 +70,7 @@ export default function CocoIchiGame() {
     setPlayerPosition(prev => ({ ...prev, x: 50 }));
     setCharacters([]);
     setCurrentScreen('game');
+    collidedIdsRef.current.clear(); // 衝突履歴をリセット
     
     setTimeout(updatePlayerPosition, 0);
   };
@@ -98,9 +102,9 @@ export default function CocoIchiGame() {
     const generateCharacter = () => {
       if (gameAreaRef.current) {
         const gameWidth = gameAreaRef.current.clientWidth;
-        const isEnemy = Math.random() > 0.4;
+        const isEnemy = Math.random() > 0.5;
         
-        const size = 60 + Math.floor(Math.random() * 120);
+        const size = 30 + Math.floor(Math.random() * 100);
         const characterSize = { width: size, height: size };
         
         const enemyImages = [
@@ -110,6 +114,11 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/teki04.jpg',
           '/images/Coco-ichi/teki05.jpg',
           '/images/Coco-ichi/teki06.jpg',
+          '/images/Coco-ichi/teki07.jpg',
+          '/images/Coco-ichi/teki08.jpg',
+          '/images/Coco-ichi/teki09.jpg',
+          '/images/Coco-ichi/teki10.jpg',
+          '/images/Coco-ichi/teki11.jpg',          
         ];
         
         const allyImages = [
@@ -119,9 +128,14 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/mikata04.jpg',
           '/images/Coco-ichi/mikata05.jpg',
           '/images/Coco-ichi/mikata06.jpg',
+          '/images/Coco-ichi/mikata07.jpg',
+          '/images/Coco-ichi/mikata08.jpg',
+          '/images/Coco-ichi/mikata09.jpg',
+          '/images/Coco-ichi/mikata10.jpg',
+          '/images/Coco-ichi/mikata11.jpg',
         ];
 
-        const imageIndex = Math.floor(Math.random() * 6);
+        const imageIndex = Math.floor(Math.random() * 11);
         const image = isEnemy ? enemyImages[imageIndex] : allyImages[imageIndex];
         
         const newCharacter: Character = {
@@ -151,10 +165,13 @@ export default function CocoIchiGame() {
       setCharacters(prevCharacters => {
         const gameHeight = gameAreaRef.current?.clientHeight || 700;
         
-        const updatedCharacters = prevCharacters.map(char => ({
-          ...char,
-          y: char.y + char.speed
-        })).filter(char => char.y < gameHeight + 100);
+        // 画面外のキャラクターを除外
+        let updatedCharacters = prevCharacters
+          .map(char => ({
+            ...char,
+            y: char.y + char.speed
+          }))
+          .filter(char => char.y < gameHeight + 100);
         
         const collisionMargin = 8;
         const playerCollisionX = playerPosition.x + collisionMargin;
@@ -164,7 +181,8 @@ export default function CocoIchiGame() {
         const playerRight = playerCollisionX + playerCollisionWidth;
         const playerBottom = playerCollisionY + playerCollisionHeight;
 
-        updatedCharacters.forEach(char => {
+        // 衝突判定
+        for (const char of updatedCharacters) {
           const charCollisionMargin = char.width * 0.1;
           const charCollisionX = char.x + charCollisionMargin;
           const charCollisionY = char.y + charCollisionMargin;
@@ -181,16 +199,14 @@ export default function CocoIchiGame() {
           ) {
             if (char.type === 'ally') {
               setScore(prev => prev + 100);
+              // 衝突したキャラクターを配列から除外
+              updatedCharacters = updatedCharacters.filter(c => c.id !== char.id);
             } else {
               handleGameOver();
             }
-
-            const index = updatedCharacters.findIndex(c => c.id === char.id);
-            if (index !== -1) {
-              updatedCharacters.splice(index, 1);
-            }
+            break; // 1回の衝突処理で終了
           }
-        });
+        }
 
         return updatedCharacters;
       });
