@@ -102,7 +102,6 @@ export default function CocoIchiGame() {
     const generateCharacter = () => {
       if (gameAreaRef.current) {
         const gameWidth = gameAreaRef.current.clientWidth;
-        const gameHeight = gameAreaRef.current.clientHeight;
         const isEnemy = Math.random() > 0.5;
         
         const size = 36 + Math.floor(Math.random() * 116);
@@ -142,19 +141,19 @@ export default function CocoIchiGame() {
         const newCharacter: Character = {
           id: Date.now(),
           x: Math.random() * (gameWidth - characterSize.width),
-          y: -characterSize.height - 50, // 固定値で画面外からの出現を保証
+          y: -characterSize.height * 2,
           width: characterSize.width,
           height: characterSize.height,
-          speed: 2 + Math.random() * 3, // スピードも調整
+          speed: 2 + Math.random() * 3,
           image,
           type: isEnemy ? 'enemy' : 'ally',
         };
+        console.log('新キャラクター出現位置:', newCharacter.y);
 
         setCharacters(prev => [...prev, newCharacter]);
       }
     };
 
-    // 生成間隔も調整
     const interval = setInterval(generateCharacter, 1500);
     return () => clearInterval(interval);
   }, [gameStarted, gameOver, currentScreen]);
