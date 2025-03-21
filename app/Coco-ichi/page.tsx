@@ -94,7 +94,7 @@ export default function CocoIchiGame() {
           y: -characterSize.height,
           width: characterSize.width,
           height: characterSize.height,
-          speed: 2 + Math.random() * 3, // ランダムな速度
+          speed: 3 + Math.random() * 5, // より高速なランダム速度
           image,
           type: isEnemy ? 'enemy' : 'ally',
         };
@@ -120,19 +120,31 @@ export default function CocoIchiGame() {
         })).filter(char => char.y < 600); // 画面外に出たキャラクターを削除
 
         // 衝突判定
-        const playerRight = playerPosition.x + playerSize.width;
-        const playerBottom = playerPosition.y + playerSize.height;
+        // プレイヤーの当たり判定を中心部分に制限（実際のサイズより小さく）
+        const collisionMargin = 8; // 余白を設定
+        const playerCollisionX = playerPosition.x + collisionMargin;
+        const playerCollisionY = playerPosition.y + collisionMargin;
+        const playerCollisionWidth = playerSize.width - (collisionMargin * 2);
+        const playerCollisionHeight = playerSize.height - (collisionMargin * 2);
+        const playerRight = playerCollisionX + playerCollisionWidth;
+        const playerBottom = playerCollisionY + playerCollisionHeight;
 
         updatedCharacters.forEach(char => {
-          const charRight = char.x + char.width;
-          const charBottom = char.y + char.height;
+          // キャラクターの当たり判定も中心部分に制限
+          const charCollisionMargin = char.width * 0.1; // キャラクターサイズに比例した余白
+          const charCollisionX = char.x + charCollisionMargin;
+          const charCollisionY = char.y + charCollisionMargin;
+          const charCollisionWidth = char.width - (charCollisionMargin * 2);
+          const charCollisionHeight = char.height - (charCollisionMargin * 2);
+          const charRight = charCollisionX + charCollisionWidth;
+          const charBottom = charCollisionY + charCollisionHeight;
 
           // 衝突判定
           if (
-            playerPosition.x < charRight &&
-            playerRight > char.x &&
-            playerPosition.y < charBottom &&
-            playerBottom > char.y
+            playerCollisionX < charRight &&
+            playerRight > charCollisionX &&
+            playerCollisionY < charBottom &&
+            playerBottom > charCollisionY
           ) {
             // 衝突時の得点計算
             if (char.type === 'ally') {
