@@ -38,6 +38,11 @@ export default function CocoIchiGame() {
   // 衝突済みのキャラクターを追跡するためのRef
   const collidedIdsRef = useRef<Set<number>>(new Set());
 
+  // ゲーム開始時刻を保持するためのref
+  const gameStartTimeRef = useRef<number>(0);
+  // 現在の出現間隔を保持するためのref
+  const spawnIntervalRef = useRef<number>(1200);
+
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
     if (gameAreaRef.current) {
@@ -61,7 +66,7 @@ export default function CocoIchiGame() {
     setCurrentScreen('intro');
   };
 
-  // ゲーム開始時に結果画像をリセット
+  // ゲーム開始時の処理を修正
   const startGame = () => {
     setGameStarted(true);
     setGameOver(false);
@@ -70,7 +75,9 @@ export default function CocoIchiGame() {
     setPlayerPosition(prev => ({ ...prev, x: 50 }));
     setCharacters([]);
     setCurrentScreen('game');
-    collidedIdsRef.current.clear(); // 衝突履歴をリセット
+    collidedIdsRef.current.clear();
+    gameStartTimeRef.current = Date.now();
+    spawnIntervalRef.current = 1200; // 初期出現間隔を1200msに設定
     
     setTimeout(updatePlayerPosition, 0);
   };
@@ -101,8 +108,18 @@ export default function CocoIchiGame() {
 
     const generateCharacter = () => {
       if (gameAreaRef.current) {
+        // 経過時間に応じて出現間隔を調整（3秒ごとに20ms短く）
+        const elapsedTime = Date.now() - gameStartTimeRef.current;
+        const seconds = elapsedTime / 1000 / 3; // 3秒単位での経過時間
+        spawnIntervalRef.current = Math.max(
+          200, // 最小間隔は200ms
+          1200 - Math.floor(seconds) * 20 // 3秒ごとに20ms短くする
+        );
+
         const gameWidth = gameAreaRef.current.clientWidth;
-        const isEnemy = Math.random() > 0.5;
+        // 時間経過とともに敵の出現確率も上げる（最大60%まで）
+        const enemyProbability = Math.min(0.6, 0.5 + Math.floor(seconds) * 0.05);
+        const isEnemy = Math.random() > (1 - enemyProbability);
         
         const size = 36 + Math.floor(Math.random() * 116);
         const characterSize = { width: size, height: size };
@@ -148,13 +165,12 @@ export default function CocoIchiGame() {
           image,
           type: isEnemy ? 'enemy' : 'ally',
         };
-        console.log('新キャラクター出現位置:', newCharacter.y);
 
         setCharacters(prev => [...prev, newCharacter]);
       }
     };
 
-    const interval = setInterval(generateCharacter, 1500);
+    const interval = setInterval(generateCharacter, spawnIntervalRef.current);
     return () => clearInterval(interval);
   }, [gameStarted, gameOver, currentScreen]);
 
@@ -269,7 +285,7 @@ export default function CocoIchiGame() {
       {/* イントロ画面 */}
       {currentScreen === 'intro' && (
         <div className="flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Dev 3アンチ撃退！CoCo壱ゲーム</h1>
+          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Dev４アンチ撃退！CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
