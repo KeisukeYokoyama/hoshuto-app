@@ -1,0 +1,14 @@
+{
+  "scores": [
+    {
+      "id": 1,
+      "playerName": "テストプレイヤー1",
+      "score": 100
+    },
+    {
+      "id": 2,
+      "playerName": "テストプレイヤー2",
+      "score": 80
+    }
+  ]
+} 

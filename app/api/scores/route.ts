@@ -1,28 +1,15 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import fs from 'fs';
+import path from 'path';
 
-interface ScoreItem {
-  member: string;
-  score: number;
-}
+const DB_FILE = path.join(process.cwd(), 'db.json');
 
 // スコアを取得するAPI
 export async function GET() {
   try {
-    // スコアを降順で取得（0~9位まで）
-    const scoresList = await kv.zrange('highscores', 0, 9, {
-      withScores: true,
-      rev: true // 高いスコア順
-    }) as ScoreItem[];
-    
-    // 整形したスコアデータを作成
-    const formattedScores = scoresList.map((item, index) => ({
-      id: index + 1,
-      playerName: item.member,
-      score: item.score
-    }));
-    
-    return NextResponse.json(formattedScores);
+    const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    const scores = data.scores.sort((a: any, b: any) => b.score - a.score).slice(0, 10);
+    return NextResponse.json(scores);
   } catch (error) {
     console.error('スコア取得エラー:', error);
     return NextResponse.json({ error: 'スコア取得に失敗しました' }, { status: 500 });
@@ -32,8 +19,7 @@ export async function GET() {
 // スコアを保存するAPI
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { playerName, score } = body;
+    const { playerName, score } = await request.json();
     
     if (!playerName || typeof score !== 'number') {
       return NextResponse.json(
@@ -41,15 +27,31 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // 現在のデータを読み込む
+    const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     
-    // スコアを保存（Redis sorted setを使用）
-    await kv.zadd('highscores', { score, member: playerName });
+    // 新しいスコアを追加
+    const newScore = {
+      id: Date.now(),
+      playerName,
+      score
+    };
     
-    // プレイヤーのランクを計算（自分より高いスコアの数 + 1）
-    const higherScores = await kv.zcount('highscores', (score + 0.000001), '+inf');
-    const rank = higherScores + 1;
+    data.scores.push(newScore);
     
-    // フロントエンドと互換性を保つためにsuccess: trueを含める
+    // スコアでソート
+    data.scores.sort((a: any, b: any) => b.score - a.score);
+    
+    // 上位10件のみ保持
+    data.scores = data.scores.slice(0, 10);
+    
+    // ファイルに保存
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    
+    // ランクを計算（自分より高いスコアの数 + 1）
+    const rank = data.scores.findIndex((s: any) => s.id === newScore.id) + 1;
+    
     return NextResponse.json({ 
       success: true, 
       rank
