@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 interface Character {
@@ -19,27 +19,26 @@ export default function CocoIchiGame() {
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0); // 最初の持ち点は0ポイント
+  const [score, setScore] = useState(0);
   const [playerName, setPlayerName] = useState('');
   const [topScores, setTopScores] = useState<Array<{id: number, playerName: string, score: number}>>([]);
   const [isSubmittingScore, setIsSubmittingScore] = useState(false);
   const [playerRank, setPlayerRank] = useState<number | null>(null);
   const [playerPosition, setPlayerPosition] = useState({ x: 50, y: 500 });
   const [characters, setCharacters] = useState<Character[]>([]);
+  
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number | undefined>(undefined);
   const playerSize = { width: 120, height: 120 };
 
-  // ゲーム開始
-  const startGame = () => {
-    // ゲーム開始処理
-    setGameStarted(true);
-    setGameOver(false);
-    setScore(0); // スコアを0から開始
-    setPlayerPosition({ x: 50, y: 500 });
-    setCharacters([]);
-    setCurrentScreen('game'); // ゲーム画面に切り替え
-    setPlayerRank(null); // ランクをリセット
+  // プレイヤー位置の更新関数
+  const updatePlayerPosition = () => {
+    if (gameAreaRef.current) {
+      const gameHeight = gameAreaRef.current.clientHeight;
+      // プレイヤーをゲームエリアの下部（下から20%の位置）に配置
+      const newY = gameHeight * 0.8 - playerSize.height / 2;
+      setPlayerPosition(prev => ({ ...prev, y: newY }));
+    }
   };
 
   // ゲームオーバー時の処理
@@ -87,6 +86,21 @@ export default function CocoIchiGame() {
     } finally {
       setIsSubmittingScore(false);
     }
+  };
+
+  // ゲーム開始
+  const startGame = () => {
+    // ゲーム開始処理
+    setGameStarted(true);
+    setGameOver(false);
+    setScore(0); // スコアを0から開始
+    setPlayerPosition(prev => ({ ...prev, x: 50 })); // Y座標は設定しない
+    setCharacters([]);
+    setCurrentScreen('game'); // ゲーム画面に切り替え
+    setPlayerRank(null); // ランクをリセット
+    
+    // ゲームエリアのサイズが確定した後にプレイヤー位置を更新
+    setTimeout(updatePlayerPosition, 0);
   };
 
   // タッチイベントの処理
@@ -282,6 +296,21 @@ export default function CocoIchiGame() {
     }
   }, [currentScreen, gameStarted, gameOver]);
 
+  // ゲームエリアのリサイズ時にプレイヤー位置を更新
+  useEffect(() => {
+    if (currentScreen === 'game' && gameStarted && !gameOver) {
+      const handleResize = () => {
+        updatePlayerPosition();
+      };
+      
+      window.addEventListener('resize', handleResize);
+      // 初期位置の設定
+      updatePlayerPosition();
+      
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [currentScreen, gameStarted, gameOver]);
+
   return (
     <div className="min-h-screen bg-amber-50">
       {/* イントロ画面 */}
@@ -346,8 +375,8 @@ export default function CocoIchiGame() {
       {currentScreen === 'game' && (
         <div className="fixed inset-0 bg-amber-50 z-10 flex flex-col items-center justify-start">
           <div className="w-full max-w-2xl mx-auto flex flex-col h-full p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-amber-800">CoCo壱ゲーム</h1>
+            <div className="flex justify-between items-center mb-2">
+              <h1 className="text-xl font-bold text-amber-800">CoCo壱ゲーム</h1>
               <div>
                 <span className="font-semibold mr-2">スコア:</span>
                 <span className="text-green-600 font-bold text-xl">{score}</span>
@@ -360,6 +389,7 @@ export default function CocoIchiGame() {
               onTouchMove={handleTouchMove}
               onTouchStart={(e) => e.preventDefault()}
               className="relative flex-grow w-full bg-orange-100 border-2 border-amber-700 overflow-hidden"
+              style={{ minHeight: '70vh' }}
             >
               {gameStarted && !gameOver && (
                 <div
@@ -451,7 +481,7 @@ export default function CocoIchiGame() {
             
             <button
               onClick={backToIntro}
-              className="mt-4 px-4 py-2 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors"
+              className="mt-2 px-4 py-2 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors"
             >
               ゲームを終了
             </button>
