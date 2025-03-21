@@ -121,7 +121,7 @@ export default function CocoIchiGame() {
         const enemyProbability = Math.min(0.6, 0.5 + Math.floor(seconds) * 0.05);
         const isEnemy = Math.random() > (1 - enemyProbability);
         
-        const size = 36 + Math.floor(Math.random() * 116);
+        const size = 36 + Math.floor(Math.random() * 108);
         const characterSize = { width: size, height: size };
         
         const enemyImages = [
