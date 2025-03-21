@@ -30,11 +30,19 @@ export default function CocoIchiGame() {
 
   // ゲーム開始
   const startGame = () => {
+    // ゲーム開始処理
     setGameStarted(true);
     setGameOver(false);
     setScore(1);
     setPlayerPosition({ x: 50, y: 500 });
     setCharacters([]);
+    
+    // フルスクリーン化（可能な場合）
+    if (gameAreaRef.current && gameAreaRef.current.requestFullscreen) {
+      gameAreaRef.current.requestFullscreen().catch(err => {
+        console.log('フルスクリーンの開始に失敗しました:', err);
+      });
+    }
   };
 
   // タッチイベントの処理
@@ -237,6 +245,27 @@ export default function CocoIchiGame() {
     setGameOver(true);
   };
 
+  const preventScroll = (e: Event) => {
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    if (gameStarted && !gameOver) {
+      // ゲームプレイ中はスクロールを禁止
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('touchmove', preventScroll, { passive: false });
+    } else {
+      // ゲーム外ではスクロールを許可
+      document.body.style.overflow = 'auto';
+      document.removeEventListener('touchmove', preventScroll);
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.removeEventListener('touchmove', preventScroll);
+    };
+  }, [gameStarted, gameOver]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-amber-50 p-4">
       <h1 className="text-3xl font-bold text-amber-800 mb-4">CoCo壱ゲーム</h1>
@@ -251,7 +280,7 @@ export default function CocoIchiGame() {
         onMouseMove={handleMouseMove}
         onTouchMove={handleTouchMove}
         onTouchStart={(e) => e.preventDefault()}
-        className="relative w-full max-w-2xl h-[600px] bg-orange-100 border-2 border-amber-700 overflow-hidden"
+        className="relative w-full max-w-2xl mx-auto h-[600px] max-h-[80vh] bg-orange-100 border-2 border-amber-700 overflow-hidden"
       >
         {!gameStarted && !gameOver && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-amber-100 bg-opacity-80">
