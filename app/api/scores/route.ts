@@ -25,6 +25,7 @@ export async function GET() {
       .limit(10);
 
     if (error) throw error;
+    if (!scores) return NextResponse.json([], { status: 200 });
 
     // フロントエンド用にデータを整形
     const formattedScores = scores.map((score: Score, index: number) => ({
@@ -52,6 +53,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (playerName.length > 10) {
+      return NextResponse.json(
+        { error: 'プレイヤー名は10文字以内にしてください' },
+        { status: 400 }
+      );
+    }
+
     // スコアを保存
     const { error: insertError } = await supabase
       .from('scores')
@@ -60,10 +68,12 @@ export async function POST(request: Request) {
     if (insertError) throw insertError;
 
     // ランクを計算（自分より高いスコアの数 + 1）
-    const { count } = await supabase
+    const { count, error: countError } = await supabase
       .from('scores')
       .select('*', { count: 'exact', head: true })
       .gt('score', score);
+
+    if (countError) throw countError;
 
     const rank = (count || 0) + 1;
 
@@ -73,6 +83,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('スコア保存エラー:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ error: 'スコアの保存に失敗しました' }, { status: 500 });
   }
 }

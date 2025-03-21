@@ -26,6 +26,7 @@ export default function CocoIchiGame() {
   const [playerRank, setPlayerRank] = useState<number | null>(null);
   const [playerPosition, setPlayerPosition] = useState({ x: 50, y: 500 });
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number | undefined>(undefined);
@@ -58,6 +59,7 @@ export default function CocoIchiGame() {
     if (!playerName.trim()) return;
     
     try {
+      setError(null);
       setIsSubmittingScore(true);
       const response = await fetch('/api/scores', {
         method: 'POST',
@@ -70,8 +72,9 @@ export default function CocoIchiGame() {
         }),
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
-        const data = await response.json();
         setPlayerRank(data.rank);
         fetchScores();
         // スコア送信後、少し待ってからイントロ画面に戻る
@@ -80,9 +83,12 @@ export default function CocoIchiGame() {
           setGameStarted(false);
           setGameOver(false);
         }, 2000);
+      } else {
+        setError(data.error || 'スコアの送信に失敗しました');
       }
     } catch (error) {
       console.error('スコア送信エラー:', error);
+      setError('スコアの送信に失敗しました');
     } finally {
       setIsSubmittingScore(false);
     }
@@ -126,13 +132,18 @@ export default function CocoIchiGame() {
   // スコアを読み込む
   const fetchScores = async () => {
     try {
+      setError(null);
       const response = await fetch('/api/scores');
       if (response.ok) {
         const data = await response.json();
         setTopScores(data);
+      } else {
+        const data = await response.json();
+        setError(data.error || 'スコアの取得に失敗しました');
       }
     } catch (error) {
       console.error('スコア取得エラー:', error);
+      setError('スコアの取得に失敗しました');
     }
   };
 
@@ -440,11 +451,15 @@ export default function CocoIchiGame() {
                   <h2 className="text-2xl font-bold text-red-800 mb-4">ゲームオーバー</h2>
                   <p className="text-lg font-semibold mb-6">最終スコア: {score}</p>
                   
+                  {error && (
+                    <p className="text-red-600 font-bold mb-4">{error}</p>
+                  )}
+                  
                   {!playerRank ? (
                     <div className="mb-4">
                       <input
                         type="text"
-                        placeholder="名前を入力"
+                        placeholder="名前を入力（10文字以内）"
                         maxLength={10}
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
