@@ -33,6 +33,26 @@ export default function CocoIchiGame() {
     setCharacters([]);
   };
 
+  // タッチイベントの処理
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (gameAreaRef.current && gameStarted && !gameOver) {
+      e.preventDefault(); // スクロールを防止
+      const rect = gameAreaRef.current.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left - playerSize.width / 2;
+      setPlayerPosition({ ...playerPosition, x: Math.max(0, Math.min(rect.width - playerSize.width, x)) });
+    }
+  };
+
+  // マウス操作の処理
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (gameAreaRef.current && gameStarted && !gameOver) {
+      const rect = gameAreaRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left - playerSize.width / 2;
+      setPlayerPosition({ ...playerPosition, x: Math.max(0, Math.min(rect.width - playerSize.width, x)) });
+    }
+  };
+
   // キャラクター（敵と味方）の生成
   useEffect(() => {
     if (!gameStarted || gameOver) return;
@@ -148,15 +168,6 @@ export default function CocoIchiGame() {
     };
   }, [gameStarted, gameOver, playerPosition, score]);
 
-  // プレイヤーの移動（マウス操作）
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (gameAreaRef.current && gameStarted && !gameOver) {
-      const rect = gameAreaRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - playerSize.width / 2;
-      setPlayerPosition({ ...playerPosition, x: Math.max(0, Math.min(rect.width - playerSize.width, x)) });
-    }
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-amber-50 p-4">
       <h1 className="text-3xl font-bold text-amber-800 mb-4">CoCo壱ゲーム</h1>
@@ -169,6 +180,8 @@ export default function CocoIchiGame() {
       <div 
         ref={gameAreaRef}
         onMouseMove={handleMouseMove}
+        onTouchMove={handleTouchMove}
+        onTouchStart={(e) => e.preventDefault()}
         className="relative w-full max-w-2xl h-[600px] bg-orange-100 border-2 border-amber-700 overflow-hidden"
       >
         {!gameStarted && !gameOver && (
