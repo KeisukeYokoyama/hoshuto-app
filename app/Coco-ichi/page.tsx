@@ -18,6 +18,10 @@ export default function CocoIchiGame() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(1); // 最初の持ち点は1ポイント
+  const [playerName, setPlayerName] = useState('');
+  const [topScores, setTopScores] = useState<Array<{id: number, playerName: string, score: number}>>([]);
+  const [isSubmittingScore, setIsSubmittingScore] = useState(false);
+  const [playerRank, setPlayerRank] = useState<number | null>(null);
   const [playerPosition, setPlayerPosition] = useState({ x: 50, y: 500 });
   const [characters, setCharacters] = useState<Character[]>([]);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -146,11 +150,12 @@ export default function CocoIchiGame() {
             playerCollisionY < charBottom &&
             playerBottom > charCollisionY
           ) {
-            // 衝突時の得点計算
+            // 衝突時の処理
             if (char.type === 'ally') {
               setScore(prev => prev + 1); // 味方：1ポイントアップ
             } else {
-              setScore(prev => prev - 10); // 敵：10ポイントマイナス
+              // 敵に当たったらゲームオーバー
+              handleGameOver();
             }
 
             // 衝突したキャラクターを削除
@@ -166,7 +171,7 @@ export default function CocoIchiGame() {
 
       // スコアチェック
       if (score <= 0) {
-        setGameOver(true);
+        handleGameOver();
       }
 
       requestRef.current = requestAnimationFrame(updateGame);
@@ -179,6 +184,58 @@ export default function CocoIchiGame() {
       }
     };
   }, [gameStarted, gameOver, playerPosition, score]);
+
+  // スコアを読み込む
+  const fetchScores = async () => {
+    try {
+      const response = await fetch('/api/scores');
+      if (response.ok) {
+        const data = await response.json();
+        setTopScores(data);
+      }
+    } catch (error) {
+      console.error('スコア取得エラー:', error);
+    }
+  };
+
+  // コンポーネントマウント時にスコアを読み込む
+  useEffect(() => {
+    fetchScores();
+  }, []);
+
+  // スコアを送信する
+  const submitScore = async () => {
+    if (!playerName.trim()) return;
+    
+    try {
+      setIsSubmittingScore(true);
+      const response = await fetch('/api/scores', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playerName: playerName.trim(),
+          score,
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPlayerRank(data.rank);
+        fetchScores();
+      }
+    } catch (error) {
+      console.error('スコア送信エラー:', error);
+    } finally {
+      setIsSubmittingScore(false);
+    }
+  };
+
+  // ゲームオーバー時の処理
+  const handleGameOver = () => {
+    setGameOver(true);
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-amber-50 p-4">
@@ -217,9 +274,33 @@ export default function CocoIchiGame() {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-100 bg-opacity-80">
             <h2 className="text-2xl font-bold text-red-800 mb-4">ゲームオーバー</h2>
             <p className="text-lg font-semibold mb-6">最終スコア: {score}</p>
+            
+            {!playerRank ? (
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="名前を入力"
+                  maxLength={10}
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="px-3 py-2 border rounded-lg mr-2"
+                  disabled={isSubmittingScore}
+                />
+                <button
+                  onClick={submitScore}
+                  disabled={!playerName.trim() || isSubmittingScore}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
+                >
+                  {isSubmittingScore ? 'スコア送信中...' : 'スコア送信'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-lg font-bold mb-4 text-blue-600">あなたのランク: {playerRank}位</p>
+            )}
+            
             <button
               onClick={startGame}
-              className="px-6 py-3 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 transition-colors"
+              className="px-6 py-3 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 transition-colors mt-2"
             >
               もう一度プレイ
             </button>
@@ -276,6 +357,35 @@ export default function CocoIchiGame() {
           <li>スコアが0以下になるとゲームオーバー</li>
           <li>マウスでプレイヤーを左右に動かします</li>
         </ul>
+      </div>
+      
+      {/* リーダーボード表示 */}
+      <div className="mt-8 w-full max-w-md">
+        <h3 className="text-xl font-bold text-amber-800 mb-2">ハイスコア</h3>
+        {topScores.length > 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">順位</th>
+                  <th className="text-left py-2">名前</th>
+                  <th className="text-right py-2">スコア</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topScores.map((entry, index) => (
+                  <tr key={entry.id} className="border-b last:border-b-0">
+                    <td className="py-2">{index + 1}</td>
+                    <td className="py-2">{entry.playerName}</td>
+                    <td className="py-2 text-right">{entry.score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-600">まだスコアがありません</p>
+        )}
       </div>
     </div>
   );
