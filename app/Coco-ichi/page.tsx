@@ -22,7 +22,7 @@ export default function CocoIchiGame() {
   const [characters, setCharacters] = useState<Character[]>([]);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number | undefined>(undefined);
-  const playerSize = { width: 80, height: 80 };
+  const playerSize = { width: 120, height: 120 };
 
   // ゲーム開始
   const startGame = () => {
@@ -63,7 +63,7 @@ export default function CocoIchiGame() {
         const isEnemy = Math.random() > 0.4; // 60%の確率で敵が出現
         
         // ランダムなサイズを生成（最小60px、最大200px）
-        const size = 60 + Math.floor(Math.random() * 140);
+        const size = 60 + Math.floor(Math.random() * 120);
         const characterSize = { width: size, height: size };
         
         // 敵と味方の画像をランダムに選択
