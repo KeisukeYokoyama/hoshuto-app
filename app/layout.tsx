@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: '/images/Coco-ichi/screen_image.png',
+        url: '/images/Coco-ichi/screen_image.jpg',
         width: 1200,
         height: 630,
       }
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: ['/images/Coco-ichi/screen_image.png'],
+    images: ['/images/Coco-ichi/screen_image.jpg'],
   },
   metadataBase: new URL('https://hoshuto-app.vercel.app'),
   icons: {
