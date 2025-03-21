@@ -2,7 +2,10 @@ import { Redis } from '@upstash/redis';
 import { NextResponse } from 'next/server';
 
 // Initialize Redis
-const redis = Redis.fromEnv();
+const redis = new Redis({
+  url: 'https://valued-finch-38858.upstash.io',
+  token: 'AZfKAAIjcDFlMThmN2U3MThiYTM0YWJmYTE5ZWQ0ZTU1Y2RjN2QzMXAxMA',
+});
 
 // スコアを取得するAPI
 export async function GET() {
