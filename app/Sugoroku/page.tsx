@@ -442,7 +442,7 @@ export default function SugorokuPage() {
 
             {/* ゲーム画面 */}
             {showGameScreen && (
-                <div className="relative container mx-auto p-4">
+                <div className="relative container mx-auto p-4 max-w-md">
                     <div className="fixed top-0 left-0 right-0 bg-white p-4 opacity-90 z-10">
                         <div className="container mx-auto max-w-md">
                             <h1 className="text-2xl font-bold mb-4">🇯🇵 保守党すごろく</h1>
