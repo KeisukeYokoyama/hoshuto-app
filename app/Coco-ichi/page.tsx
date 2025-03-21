@@ -141,7 +141,7 @@ export default function CocoIchiGame() {
         const newCharacter: Character = {
           id: Date.now(),
           x: Math.random() * (gameWidth - characterSize.width),
-          y: -characterSize.height,
+          y: -characterSize.height * 2,
           width: characterSize.width,
           height: characterSize.height,
           speed: 3 + Math.random() * 5,
