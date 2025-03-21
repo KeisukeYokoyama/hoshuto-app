@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CoCo壱ゲーム",
     description: "CoCo壱ゲームです。",
-    images: ['/images/Coco-ichi/ogp_card.png'],
+    images: ['/images/Coco-ichi/screen_image.png'],
   },
 };
 
