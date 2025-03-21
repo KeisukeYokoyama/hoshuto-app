@@ -1,15 +1,39 @@
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
-const DB_FILE = path.join(process.cwd(), 'db.json');
+interface Score {
+  id: string;
+  created_at: string;
+  player_name: string;
+  score: number;
+}
+
+// Supabaseクライアントの初期化
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // スコアを取得するAPI
 export async function GET() {
   try {
-    const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    const scores = data.scores.sort((a: any, b: any) => b.score - a.score).slice(0, 10);
-    return NextResponse.json(scores);
+    // 上位10件のスコアを取得
+    const { data: scores, error } = await supabase
+      .from('scores')
+      .select('*')
+      .order('score', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+
+    // フロントエンド用にデータを整形
+    const formattedScores = scores.map((score: Score, index: number) => ({
+      id: index + 1,
+      playerName: score.player_name,
+      score: score.score
+    }));
+
+    return NextResponse.json(formattedScores);
   } catch (error) {
     console.error('スコア取得エラー:', error);
     return NextResponse.json({ error: 'スコア取得に失敗しました' }, { status: 500 });
@@ -28,30 +52,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // 現在のデータを読み込む
-    const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-    
-    // 新しいスコアを追加
-    const newScore = {
-      id: Date.now(),
-      playerName,
-      score
-    };
-    
-    data.scores.push(newScore);
-    
-    // スコアでソート
-    data.scores.sort((a: any, b: any) => b.score - a.score);
-    
-    // 上位10件のみ保持
-    data.scores = data.scores.slice(0, 10);
-    
-    // ファイルに保存
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
-    
+    // スコアを保存
+    const { error: insertError } = await supabase
+      .from('scores')
+      .insert([{ player_name: playerName, score }]);
+
+    if (insertError) throw insertError;
+
     // ランクを計算（自分より高いスコアの数 + 1）
-    const rank = data.scores.findIndex((s: any) => s.id === newScore.id) + 1;
-    
+    const { count } = await supabase
+      .from('scores')
+      .select('*', { count: 'exact', head: true })
+      .gt('score', score);
+
+    const rank = (count || 0) + 1;
+
     return NextResponse.json({ 
       success: true, 
       rank
