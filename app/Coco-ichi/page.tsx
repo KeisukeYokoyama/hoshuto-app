@@ -105,7 +105,7 @@ export default function CocoIchiGame() {
         const gameHeight = gameAreaRef.current.clientHeight;
         const isEnemy = Math.random() > 0.5;
         
-        const size = 30 + Math.floor(Math.random() * 100);
+        const size = 36 + Math.floor(Math.random() * 116);
         const characterSize = { width: size, height: size };
         
         const enemyImages = [
@@ -270,7 +270,7 @@ export default function CocoIchiGame() {
       {/* イントロ画面 */}
       {currentScreen === 'intro' && (
         <div className="flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Dev 2アンチ撃退！CoCo壱ゲーム</h1>
+          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Dev 3アンチ撃退！CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
