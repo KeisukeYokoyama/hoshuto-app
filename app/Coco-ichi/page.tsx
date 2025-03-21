@@ -102,6 +102,7 @@ export default function CocoIchiGame() {
     const generateCharacter = () => {
       if (gameAreaRef.current) {
         const gameWidth = gameAreaRef.current.clientWidth;
+        const gameHeight = gameAreaRef.current.clientHeight;
         const isEnemy = Math.random() > 0.5;
         
         const size = 30 + Math.floor(Math.random() * 100);
@@ -141,10 +142,10 @@ export default function CocoIchiGame() {
         const newCharacter: Character = {
           id: Date.now(),
           x: Math.random() * (gameWidth - characterSize.width),
-          y: -characterSize.height * 2,
+          y: -characterSize.height - 50, // 固定値で画面外からの出現を保証
           width: characterSize.width,
           height: characterSize.height,
-          speed: 3 + Math.random() * 5,
+          speed: 2 + Math.random() * 3, // スピードも調整
           image,
           type: isEnemy ? 'enemy' : 'ally',
         };
@@ -153,7 +154,8 @@ export default function CocoIchiGame() {
       }
     };
 
-    const interval = setInterval(generateCharacter, 1000);
+    // 生成間隔も調整
+    const interval = setInterval(generateCharacter, 1500);
     return () => clearInterval(interval);
   }, [gameStarted, gameOver, currentScreen]);
 
@@ -268,7 +270,7 @@ export default function CocoIchiGame() {
       {/* イントロ画面 */}
       {currentScreen === 'intro' && (
         <div className="flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Devアンチ撃退！CoCo壱ゲーム</h1>
+          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Dev 2アンチ撃退！CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
