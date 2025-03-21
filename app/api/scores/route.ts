@@ -1,36 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
+import { Redis } from '@upstash/redis';
 import { NextResponse } from 'next/server';
 
-interface Score {
-  id: string;
-  created_at: string;
-  player_name: string;
-  score: number;
-}
-
-// Supabaseクライアントの初期化
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Initialize Redis
+const redis = Redis.fromEnv();
 
 // スコアを取得するAPI
 export async function GET() {
   try {
-    // 上位10件のスコアを取得
-    const { data: scores, error } = await supabase
-      .from('scores')
-      .select('*')
-      .order('score', { ascending: false })
-      .limit(10);
-
-    if (error) throw error;
-    if (!scores) return NextResponse.json([], { status: 200 });
+    // スコアの取得（降順で上位10件）
+    const scores = await redis.zrange('highscores', 0, 9, {
+      rev: true,
+      withScores: true,
+    });
 
     // フロントエンド用にデータを整形
-    const formattedScores = scores.map((score: Score, index: number) => ({
+    const formattedScores = scores.map((score: any, index: number) => ({
       id: index + 1,
-      playerName: score.player_name,
+      playerName: score.member,
       score: score.score
     }));
 
@@ -60,22 +46,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // スコアを保存
-    const { error: insertError } = await supabase
-      .from('scores')
-      .insert([{ player_name: playerName, score }]);
-
-    if (insertError) throw insertError;
+    // スコアを保存（sorted setを使用）
+    await redis.zadd('highscores', {
+      score: score,
+      member: playerName
+    });
 
     // ランクを計算（自分より高いスコアの数 + 1）
-    const { count, error: countError } = await supabase
-      .from('scores')
-      .select('*', { count: 'exact', head: true })
-      .gt('score', score);
-
-    if (countError) throw countError;
-
-    const rank = (count || 0) + 1;
+    const higherScores = await redis.zcount('highscores', score + 0.000001, '+inf');
+    const rank = higherScores + 1;
 
     return NextResponse.json({ 
       success: true, 
