@@ -251,19 +251,31 @@ export default function CocoIchiGame() {
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
-      // ゲームプレイ中はスクロールを禁止
+      // スクロール禁止の設定
+      const originalStyle = {
+        position: document.body.style.position,
+        overflow: document.body.style.overflow,
+        top: document.body.style.top,
+      };
+      
+      // 現在のスクロール位置を保存
+      const scrollY = window.scrollY;
+      
+      // スクロールを固定
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
       document.body.style.overflow = 'hidden';
-      document.addEventListener('touchmove', preventScroll, { passive: false });
-    } else {
-      // ゲーム外ではスクロールを許可
-      document.body.style.overflow = 'auto';
-      document.removeEventListener('touchmove', preventScroll);
+      
+      return () => {
+        // 元に戻す
+        document.body.style.position = originalStyle.position;
+        document.body.style.overflow = originalStyle.overflow;
+        document.body.style.top = originalStyle.top;
+        
+        // スクロール位置を復元
+        window.scrollTo(0, scrollY);
+      };
     }
-
-    return () => {
-      document.body.style.overflow = 'auto';
-      document.removeEventListener('touchmove', preventScroll);
-    };
   }, [gameStarted, gameOver]);
 
   return (
