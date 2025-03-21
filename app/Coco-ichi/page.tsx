@@ -202,11 +202,14 @@ export default function CocoIchiGame() {
     const updateGame = () => {
       // キャラクターの移動
       setCharacters(prevCharacters => {
+        // ゲームエリアの高さを取得して、削除する位置を調整
+        const gameHeight = gameAreaRef.current?.clientHeight || 700;
+        
         const updatedCharacters = prevCharacters.map(char => ({
           ...char,
           y: char.y + char.speed
-        })).filter(char => char.y < 600); // 画面外に出たキャラクターを削除
-
+        })).filter(char => char.y < gameHeight + 100); // 画面外に十分出るまで保持
+        
         // 衝突判定
         // プレイヤーの当たり判定を中心部分に制限（実際のサイズより小さく）
         const collisionMargin = 8; // 余白を設定
@@ -318,7 +321,7 @@ export default function CocoIchiGame() {
         <div className="flex flex-col items-center justify-center p-4">
           <h1 className="text-3xl font-bold text-amber-800 mb-6">CoCo壱ゲーム</h1>
           
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-2xl w-full">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <h2 className="text-2xl font-bold text-amber-800 mb-4">ゲームの遊び方</h2>
             <div className="mb-6">
               <p className="text-lg mb-4">
@@ -341,7 +344,7 @@ export default function CocoIchiGame() {
           </div>
           
           {/* ハイスコア表示 */}
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl w-full">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-amber-800 mb-4">ハイスコア</h3>
             {topScores.length > 0 ? (
               <div className="overflow-x-auto">
@@ -374,12 +377,12 @@ export default function CocoIchiGame() {
       {/* ゲーム画面 */}
       {currentScreen === 'game' && (
         <div className="fixed inset-0 bg-amber-50 z-10 flex flex-col items-center justify-start">
-          <div className="w-full max-w-2xl mx-auto flex flex-col h-full p-4">
+          <div className="w-full max-w-md mx-auto flex flex-col h-full pt-2">
             <div className="flex justify-between items-center mb-2">
-              <h1 className="text-xl font-bold text-amber-800">CoCo壱ゲーム</h1>
-              <div>
+              <h1 className="text-xl font-bold text-gray-800 ml-4">CoCo壱ゲーム</h1>
+              <div className="flex items-center">
                 <span className="font-semibold mr-2">スコア:</span>
-                <span className="text-green-600 font-bold text-xl">{score}</span>
+                <span className="text-green-600 font-bold text-xl mr-4">{score}</span>
               </div>
             </div>
             
@@ -388,7 +391,7 @@ export default function CocoIchiGame() {
               onMouseMove={handleMouseMove}
               onTouchMove={handleTouchMove}
               onTouchStart={(e) => e.preventDefault()}
-              className="relative flex-grow w-full bg-orange-100 border-2 border-amber-700 overflow-hidden"
+              className="relative flex-grow w-full bg-yellow-300 overflow-hidden"
               style={{ minHeight: '70vh' }}
             >
               {gameStarted && !gameOver && (
@@ -472,19 +475,12 @@ export default function CocoIchiGame() {
                       onClick={backToIntro}
                       className="px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors"
                     >
-                      メニューに戻る
+                      ゲームを終了
                     </button>
                   </div>
                 </div>
               )}
             </div>
-            
-            <button
-              onClick={backToIntro}
-              className="mt-2 px-4 py-2 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              ゲームを終了
-            </button>
           </div>
         </div>
       )}
