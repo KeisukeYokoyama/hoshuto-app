@@ -356,7 +356,7 @@ export default function CocoIchiGame() {
       {/* イントロ画面 */}
       {currentScreen === 'intro' && (
         <div className="flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold text-yellow-500 mb-6">Dev４アンチ撃退！CoCo壱ゲーム</h1>
+          <h1 className="text-3xl font-bold text-yellow-500 mb-6">アンチ撃退！CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
@@ -368,6 +368,7 @@ export default function CocoIchiGame() {
                 <li>画面下のカレーを左右に動かして敵を避けながら味方に当てます</li>
                 <li>味方キャラクターに当たると100円獲得できます</li>
                 <li>敵キャラクターに当たるとゲームオーバーです</li>
+                <li>ゲームオーバー後、名前を入力してスコアを登録できます</li>
               </ul>
             </div>
             
@@ -502,7 +503,7 @@ export default function CocoIchiGame() {
                         onClick={backToIntro}
                         className="w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors"
                       >
-                        ゲームを終了
+                        ゲーム終了
                       </button>
                     </div>
                   </div>
