@@ -21,6 +21,17 @@ const resultImages = [
   '/images/Coco-ichi/result_image03.png'
 ];
 
+// 新しいインターフェースを追加
+interface Score {
+  id?: number;
+  name: string;
+  score: number;
+  date: string;
+}
+
+// APIのベースURLを環境変数から取得
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
 export default function CocoIchiGame() {
   // 画面状態管理
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
@@ -34,6 +45,19 @@ export default function CocoIchiGame() {
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number | undefined>(undefined);
   const playerSize = { width: 120, height: 120 };
+
+  // 衝突済みのキャラクターを追跡するためのRef
+  const collidedIdsRef = useRef<Set<number>>(new Set());
+
+  // ゲーム開始時刻を保持するためのref
+  const gameStartTimeRef = useRef<number>(0);
+  // 現在の出現間隔を保持するためのref
+  const spawnIntervalRef = useRef<number>(1200);
+
+  // 新しいstate追加
+  const [showScoreSubmit, setShowScoreSubmit] = useState(false);
+  const [playerName, setPlayerName] = useState('');
+  const [highScores, setHighScores] = useState<Score[]>([]);
 
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
@@ -49,6 +73,7 @@ export default function CocoIchiGame() {
     const randomImage = resultImages[Math.floor(Math.random() * resultImages.length)];
     setResultImage(randomImage);
     setGameOver(true);
+    setShowScoreSubmit(true);
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -58,7 +83,7 @@ export default function CocoIchiGame() {
     setCurrentScreen('intro');
   };
 
-  // ゲーム開始時に結果画像をリセット
+  // ゲーム開始時の処理を修正
   const startGame = () => {
     setGameStarted(true);
     setGameOver(false);
@@ -67,6 +92,9 @@ export default function CocoIchiGame() {
     setPlayerPosition(prev => ({ ...prev, x: 50 }));
     setCharacters([]);
     setCurrentScreen('game');
+    collidedIdsRef.current.clear();
+    gameStartTimeRef.current = Date.now();
+    spawnIntervalRef.current = 1200; // 初期出現間隔を1200msに設定
     
     setTimeout(updatePlayerPosition, 0);
   };
@@ -97,10 +125,20 @@ export default function CocoIchiGame() {
 
     const generateCharacter = () => {
       if (gameAreaRef.current) {
+        // 経過時間に応じて出現間隔を調整（3秒ごとに20ms短く）
+        const elapsedTime = Date.now() - gameStartTimeRef.current;
+        const seconds = elapsedTime / 1000 / 3; // 3秒単位での経過時間
+        spawnIntervalRef.current = Math.max(
+          200, // 最小間隔は200ms
+          1200 - Math.floor(seconds) * 20 // 3秒ごとに20ms短くする
+        );
+
         const gameWidth = gameAreaRef.current.clientWidth;
-        const isEnemy = Math.random() > 0.4;
+        // 時間経過とともに敵の出現確率も上げる（最大60%まで）
+        const enemyProbability = Math.min(0.6, 0.5 + Math.floor(seconds) * 0.05);
+        const isEnemy = Math.random() > (1 - enemyProbability);
         
-        const size = 60 + Math.floor(Math.random() * 120);
+        const size = 36 + Math.floor(Math.random() * 108);
         const characterSize = { width: size, height: size };
         
         const enemyImages = [
@@ -110,6 +148,11 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/teki04.jpg',
           '/images/Coco-ichi/teki05.jpg',
           '/images/Coco-ichi/teki06.jpg',
+          '/images/Coco-ichi/teki07.jpg',
+          '/images/Coco-ichi/teki08.jpg',
+          '/images/Coco-ichi/teki09.jpg',
+          '/images/Coco-ichi/teki10.jpg',
+          '/images/Coco-ichi/teki11.jpg',          
         ];
         
         const allyImages = [
@@ -119,18 +162,23 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/mikata04.jpg',
           '/images/Coco-ichi/mikata05.jpg',
           '/images/Coco-ichi/mikata06.jpg',
+          '/images/Coco-ichi/mikata07.jpg',
+          '/images/Coco-ichi/mikata08.jpg',
+          '/images/Coco-ichi/mikata09.jpg',
+          '/images/Coco-ichi/mikata10.jpg',
+          '/images/Coco-ichi/mikata11.jpg',
         ];
 
-        const imageIndex = Math.floor(Math.random() * 6);
+        const imageIndex = Math.floor(Math.random() * 11);
         const image = isEnemy ? enemyImages[imageIndex] : allyImages[imageIndex];
         
         const newCharacter: Character = {
           id: Date.now(),
           x: Math.random() * (gameWidth - characterSize.width),
-          y: -characterSize.height,
+          y: -characterSize.height * 2,
           width: characterSize.width,
           height: characterSize.height,
-          speed: 3 + Math.random() * 5,
+          speed: 2 + Math.random() * 3,
           image,
           type: isEnemy ? 'enemy' : 'ally',
         };
@@ -139,7 +187,7 @@ export default function CocoIchiGame() {
       }
     };
 
-    const interval = setInterval(generateCharacter, 1000);
+    const interval = setInterval(generateCharacter, spawnIntervalRef.current);
     return () => clearInterval(interval);
   }, [gameStarted, gameOver, currentScreen]);
 
@@ -151,10 +199,13 @@ export default function CocoIchiGame() {
       setCharacters(prevCharacters => {
         const gameHeight = gameAreaRef.current?.clientHeight || 700;
         
-        const updatedCharacters = prevCharacters.map(char => ({
-          ...char,
-          y: char.y + char.speed
-        })).filter(char => char.y < gameHeight + 100);
+        // 画面外のキャラクターを除外
+        let updatedCharacters = prevCharacters
+          .map(char => ({
+            ...char,
+            y: char.y + char.speed
+          }))
+          .filter(char => char.y < gameHeight + 100);
         
         const collisionMargin = 8;
         const playerCollisionX = playerPosition.x + collisionMargin;
@@ -164,7 +215,8 @@ export default function CocoIchiGame() {
         const playerRight = playerCollisionX + playerCollisionWidth;
         const playerBottom = playerCollisionY + playerCollisionHeight;
 
-        updatedCharacters.forEach(char => {
+        // 衝突判定
+        for (const char of updatedCharacters) {
           const charCollisionMargin = char.width * 0.1;
           const charCollisionX = char.x + charCollisionMargin;
           const charCollisionY = char.y + charCollisionMargin;
@@ -181,16 +233,14 @@ export default function CocoIchiGame() {
           ) {
             if (char.type === 'ally') {
               setScore(prev => prev + 100);
+              // 衝突したキャラクターを配列から除外
+              updatedCharacters = updatedCharacters.filter(c => c.id !== char.id);
             } else {
               handleGameOver();
             }
-
-            const index = updatedCharacters.findIndex(c => c.id === char.id);
-            if (index !== -1) {
-              updatedCharacters.splice(index, 1);
-            }
+            break; // 1回の衝突処理で終了
           }
-        });
+        }
 
         return updatedCharacters;
       });
@@ -247,6 +297,60 @@ export default function CocoIchiGame() {
     }
   }, [currentScreen, gameStarted, gameOver]);
 
+  // スコアを取得する関数
+  useEffect(() => {
+    const fetchScores = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/scores`);
+        const data = await response.json();
+        const scoresArray = Array.isArray(data) ? data : [];
+        setHighScores(scoresArray
+          .sort((a: Score, b: Score) => b.score - a.score)
+          .slice(0, 10)
+        );
+      } catch (error) {
+        console.error('スコア取得エラー:', error);
+      }
+    };
+
+    fetchScores();
+  }, []);
+
+  // スコア送信関数
+  const submitScore = async () => {
+    if (!playerName.trim()) return;
+
+    const scoreData: Score = {
+      name: playerName,
+      score: score,
+      date: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/scores`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scoreData),
+      });
+
+      if (response.ok) {
+        const updatedResponse = await fetch(`${apiBaseUrl}/scores`);
+        const data = await updatedResponse.json();
+        const scoresArray = Array.isArray(data) ? data : [];
+        setHighScores(scoresArray
+          .sort((a: Score, b: Score) => b.score - a.score)
+          .slice(0, 10)
+        );
+        setShowScoreSubmit(false);
+        setPlayerName('');
+      }
+    } catch (error) {
+      console.error('スコア送信エラー:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* イントロ画面 */}
@@ -264,6 +368,7 @@ export default function CocoIchiGame() {
                 <li>画面下のカレーを左右に動かして敵を避けながら味方に当てます</li>
                 <li>味方キャラクターに当たると100円獲得できます</li>
                 <li>敵キャラクターに当たるとゲームオーバーです</li>
+                <li>ゲームオーバー後、名前を入力してスコアを登録できます</li>
               </ul>
             </div>
             
@@ -273,6 +378,19 @@ export default function CocoIchiGame() {
             >
               ゲームスタート
             </button>
+          </div>
+
+          {/* ランキング表示を追加 */}
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
+            <h2 className="text-xl font-bold text-amber-500 mb-4">ハイスコアランキング</h2>
+            <div className="space-y-2">
+              {highScores.map((score, index) => (
+                <div key={score.id} className="flex justify-between items-center">
+                  <span className="font-bold">{index + 1}. {score.name}</span>
+                  <span className="text-green-600">{score.score}円</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -346,6 +464,24 @@ export default function CocoIchiGame() {
                       <p className="text-xl font-semibold mb-4">獲得賞金: {score} 円</p>
                     </div>
 
+                    {showScoreSubmit && (
+                      <div className="mb-4">
+                        <input
+                          type="text"
+                          value={playerName}
+                          onChange={(e) => setPlayerName(e.target.value)}
+                          placeholder="名前を入力してください"
+                          className="w-full px-4 py-2 border rounded mb-2"
+                        />
+                        <button
+                          onClick={submitScore}
+                          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          スコアを登録
+                        </button>
+                      </div>
+                    )}
+
                     <div className="relative w-full aspect-video mb-6">
                       <Image
                         src={resultImage}
@@ -367,7 +503,7 @@ export default function CocoIchiGame() {
                         onClick={backToIntro}
                         className="w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors"
                       >
-                        ゲームを終了
+                        ゲーム終了
                       </button>
                     </div>
                   </div>
