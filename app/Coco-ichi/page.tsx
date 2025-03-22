@@ -21,6 +21,17 @@ const resultImages = [
   '/images/Coco-ichi/result_image03.png'
 ];
 
+// 新しいインターフェースを追加
+interface Score {
+  id?: number;
+  name: string;
+  score: number;
+  date: string;
+}
+
+// APIのベースURLを環境変数から取得
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+
 export default function CocoIchiGame() {
   // 画面状態管理
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
@@ -43,6 +54,11 @@ export default function CocoIchiGame() {
   // 現在の出現間隔を保持するためのref
   const spawnIntervalRef = useRef<number>(1200);
 
+  // 新しいstate追加
+  const [showScoreSubmit, setShowScoreSubmit] = useState(false);
+  const [playerName, setPlayerName] = useState('');
+  const [highScores, setHighScores] = useState<Score[]>([]);
+
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
     if (gameAreaRef.current) {
@@ -57,6 +73,7 @@ export default function CocoIchiGame() {
     const randomImage = resultImages[Math.floor(Math.random() * resultImages.length)];
     setResultImage(randomImage);
     setGameOver(true);
+    setShowScoreSubmit(true);
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -280,6 +297,60 @@ export default function CocoIchiGame() {
     }
   }, [currentScreen, gameStarted, gameOver]);
 
+  // スコアを取得する関数
+  useEffect(() => {
+    const fetchScores = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/scores`);
+        const data = await response.json();
+        const scoresArray = Array.isArray(data) ? data : [];
+        setHighScores(scoresArray
+          .sort((a: Score, b: Score) => b.score - a.score)
+          .slice(0, 10)
+        );
+      } catch (error) {
+        console.error('スコア取得エラー:', error);
+      }
+    };
+
+    fetchScores();
+  }, []);
+
+  // スコア送信関数
+  const submitScore = async () => {
+    if (!playerName.trim()) return;
+
+    const scoreData: Score = {
+      name: playerName,
+      score: score,
+      date: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/scores`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scoreData),
+      });
+
+      if (response.ok) {
+        const updatedResponse = await fetch(`${apiBaseUrl}/scores`);
+        const data = await updatedResponse.json();
+        const scoresArray = Array.isArray(data) ? data : [];
+        setHighScores(scoresArray
+          .sort((a: Score, b: Score) => b.score - a.score)
+          .slice(0, 10)
+        );
+        setShowScoreSubmit(false);
+        setPlayerName('');
+      }
+    } catch (error) {
+      console.error('スコア送信エラー:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* イントロ画面 */}
@@ -306,6 +377,19 @@ export default function CocoIchiGame() {
             >
               ゲームスタート
             </button>
+          </div>
+
+          {/* ランキング表示を追加 */}
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
+            <h2 className="text-xl font-bold text-amber-500 mb-4">ハイスコアランキング</h2>
+            <div className="space-y-2">
+              {highScores.map((score, index) => (
+                <div key={score.id} className="flex justify-between items-center">
+                  <span className="font-bold">{index + 1}. {score.name}</span>
+                  <span className="text-green-600">{score.score}円</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -378,6 +462,24 @@ export default function CocoIchiGame() {
                       <h2 className="text-2xl font-bold text-red-800 mb-4">ゲームオーバー</h2>
                       <p className="text-xl font-semibold mb-4">獲得賞金: {score} 円</p>
                     </div>
+
+                    {showScoreSubmit && (
+                      <div className="mb-4">
+                        <input
+                          type="text"
+                          value={playerName}
+                          onChange={(e) => setPlayerName(e.target.value)}
+                          placeholder="名前を入力してください"
+                          className="w-full px-4 py-2 border rounded mb-2"
+                        />
+                        <button
+                          onClick={submitScore}
+                          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          スコアを登録
+                        </button>
+                      </div>
+                    )}
 
                     <div className="relative w-full aspect-video mb-6">
                       <Image
