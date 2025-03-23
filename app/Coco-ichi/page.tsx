@@ -30,12 +30,6 @@ interface Score {
   date: string;
 }
 
-// Supabaseクライアントの初期化
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 // コンポーネントの先頭でAudioオブジェクトを定義
 const gameEndSound = typeof Audio !== 'undefined' 
   ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
@@ -73,6 +67,12 @@ export default function CocoIchiGame() {
 
   // 新しい状態変数を追加
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
+  // Supabaseクライアントをコンポーネント内で初期化
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+  );
 
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
