@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { createClient } from '@supabase/supabase-js';
 
 interface Character {
   id: number;
@@ -29,8 +30,11 @@ interface Score {
   date: string;
 }
 
-// APIのベースURLを環境変数から取得
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+// Supabaseクライアントの初期化
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // コンポーネントの先頭でAudioオブジェクトを定義
 const gameEndSound = typeof Audio !== 'undefined' 
@@ -329,17 +333,18 @@ export default function CocoIchiGame() {
     }
   }, [currentScreen, gameStarted, gameOver]);
 
-  // スコアを取得する関数
+  // スコアを取得する関数を修正
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/scores`);
-        const data = await response.json();
-        const scoresArray = Array.isArray(data) ? data : [];
-        setHighScores(scoresArray
-          .sort((a: Score, b: Score) => b.score - a.score)
-          .slice(0, 10)
-        );
+        const { data, error } = await supabase
+          .from('scores')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        setHighScores(data || []);
       } catch (error) {
         console.error('スコア取得エラー:', error);
       }
@@ -348,7 +353,7 @@ export default function CocoIchiGame() {
     fetchScores();
   }, []);
 
-  // スコア送信関数
+  // スコア送信関数を修正
   const submitScore = async () => {
     if (!playerName.trim()) return;
 
@@ -359,25 +364,22 @@ export default function CocoIchiGame() {
     };
 
     try {
-      const response = await fetch(`${apiBaseUrl}/scores`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(scoreData),
-      });
+      const { error } = await supabase
+        .from('scores')
+        .insert([scoreData]);
 
-      if (response.ok) {
-        const updatedResponse = await fetch(`${apiBaseUrl}/scores`);
-        const data = await updatedResponse.json();
-        const scoresArray = Array.isArray(data) ? data : [];
-        setHighScores(scoresArray
-          .sort((a: Score, b: Score) => b.score - a.score)
-          .slice(0, 10)
-        );
-        setShowScoreSubmit(false);
-        setPlayerName('');
-      }
+      if (error) throw error;
+
+      // スコアを再取得
+      const { data: newScores } = await supabase
+        .from('scores')
+        .select('*')
+        .order('score', { ascending: false })
+        .limit(10);
+
+      setHighScores(newScores || []);
+      setShowScoreSubmit(false);
+      setPlayerName('');
     } catch (error) {
       console.error('スコア送信エラー:', error);
     }
