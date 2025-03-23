@@ -35,6 +35,11 @@ const gameEndSound = typeof Audio !== 'undefined'
   ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
   : null;
 
+// 無音のダミーサウンドを追加
+const dummySound = typeof Audio !== 'undefined'
+  ? new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
+  : null;
+
 export default function CocoIchiGame() {
   // 画面状態管理
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
@@ -67,6 +72,9 @@ export default function CocoIchiGame() {
 
   // 新しい状態変数を追加
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
+  // サウンド初期化状態を管理
+  const [isSoundInitialized, setIsSoundInitialized] = useState(false);
 
   // Supabaseクライアントをコンポーネント内で初期化
   const supabase = createClient(
@@ -385,6 +393,29 @@ export default function CocoIchiGame() {
     }
   };
 
+  // サウンド初期化関数
+  const initializeSound = () => {
+    if (!isSoundInitialized && dummySound) {
+      dummySound.play()
+        .then(() => {
+          setIsSoundInitialized(true);
+        })
+        .catch(error => console.log('サウンド初期化エラー:', error));
+    }
+  };
+
+  // スタートボタンのクリックハンドラーを修正
+  const handleStartGame = () => {
+    initializeSound();
+    startGame();
+  };
+
+  // サウンド設定ボタンのクリックハンドラーを修正
+  const handleSoundToggle = () => {
+    initializeSound();
+    setIsSoundEnabled(!isSoundEnabled);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* イントロ画面 */}
@@ -395,7 +426,7 @@ export default function CocoIchiGame() {
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <div className="flex justify-end -mb-6">
               <button
-                onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                onClick={handleSoundToggle}
                 className="px-2 rounded-full bg-white"
               >
                 {isSoundEnabled ? (
@@ -420,7 +451,7 @@ export default function CocoIchiGame() {
             </div>
             
             <button
-              onClick={startGame}
+              onClick={handleStartGame}
               className="w-full px-6 py-4 bg-yellow-300 text-gray-800 font-bold rounded-lg hover:bg-yellow-400 transition-colors text-xl"
             >
               ゲームスタート
@@ -540,7 +571,7 @@ export default function CocoIchiGame() {
 
                     <div className="flex flex-col gap-3">
                       <button
-                        onClick={startGame}
+                        onClick={handleStartGame}
                         className="w-full px-6 py-3 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 transition-colors"
                       >
                         もう一度プレイ
