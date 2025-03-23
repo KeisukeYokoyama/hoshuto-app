@@ -134,7 +134,7 @@ export default function CocoIchiGame() {
         );
 
         const gameWidth = gameAreaRef.current.clientWidth;
-        // 時間経過とともに敵の出現確率も上げる（最大60%まで）
+        // 時間経過とともにアンチの出現確率を上げる（最大60%まで）
         const enemyProbability = Math.min(0.6, 0.3 + Math.floor(seconds) * 0.05);
         const isEnemy = Math.random() > (1 - enemyProbability);
         
@@ -219,11 +219,12 @@ export default function CocoIchiGame() {
           }))
           .filter(char => char.y < gameHeight + 100);
         
-        const collisionMargin = 8;
-        const playerCollisionX = playerPosition.x + collisionMargin;
-        const playerCollisionY = playerPosition.y + collisionMargin;
-        const playerCollisionWidth = playerSize.width - (collisionMargin * 2);
-        const playerCollisionHeight = playerSize.height - (collisionMargin * 2);
+        const horizontalMargin = 8;  // 左右のマージン8
+        const verticalMargin = 20;   // 上下のマージン20
+        const playerCollisionX = playerPosition.x + horizontalMargin;
+        const playerCollisionY = playerPosition.y + verticalMargin;
+        const playerCollisionWidth = playerSize.width - (horizontalMargin * 2);
+        const playerCollisionHeight = playerSize.height - (verticalMargin * 2);
         const playerRight = playerCollisionX + playerCollisionWidth;
         const playerBottom = playerCollisionY + playerCollisionHeight;
 
