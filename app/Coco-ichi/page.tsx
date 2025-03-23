@@ -135,7 +135,7 @@ export default function CocoIchiGame() {
 
         const gameWidth = gameAreaRef.current.clientWidth;
         // 時間経過とともに敵の出現確率も上げる（最大60%まで）
-        const enemyProbability = Math.min(0.6, 0.5 + Math.floor(seconds) * 0.05);
+        const enemyProbability = Math.min(0.6, 0.3 + Math.floor(seconds) * 0.05);
         const isEnemy = Math.random() > (1 - enemyProbability);
         
         const size = 36 + Math.floor(Math.random() * 108);
@@ -152,7 +152,13 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/teki08.jpg',
           '/images/Coco-ichi/teki09.jpg',
           '/images/Coco-ichi/teki10.jpg',
-          '/images/Coco-ichi/teki11.jpg',          
+          '/images/Coco-ichi/teki11.jpg',
+          '/images/Coco-ichi/teki12.jpg',
+          '/images/Coco-ichi/teki13.jpg',
+          '/images/Coco-ichi/teki14.jpg',
+          '/images/Coco-ichi/teki15.jpg',
+          '/images/Coco-ichi/teki16.jpg',
+          '/images/Coco-ichi/teki17.jpg',
         ];
         
         const allyImages = [
@@ -167,9 +173,15 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/mikata09.jpg',
           '/images/Coco-ichi/mikata10.jpg',
           '/images/Coco-ichi/mikata11.jpg',
+          '/images/Coco-ichi/mikata12.jpg',
+          '/images/Coco-ichi/mikata13.jpg',
+          '/images/Coco-ichi/mikata14.jpg',
+          '/images/Coco-ichi/mikata15.jpg',
+          '/images/Coco-ichi/mikata16.jpg',
+          '/images/Coco-ichi/mikata17.jpg',
         ];
 
-        const imageIndex = Math.floor(Math.random() * 11);
+        const imageIndex = Math.floor(Math.random() * 17);
         const image = isEnemy ? enemyImages[imageIndex] : allyImages[imageIndex];
         
         const newCharacter: Character = {
@@ -356,7 +368,7 @@ export default function CocoIchiGame() {
       {/* イントロ画面 */}
       {currentScreen === 'intro' && (
         <div className="flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold text-yellow-500 mb-6">アンチ撃退！CoCo壱ゲーム</h1>
+          <h1 className="text-3xl font-bold text-yellow-500 mb-6">アンチ撃退! CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
@@ -365,9 +377,9 @@ export default function CocoIchiGame() {
                 CoCo壱をアンチに取られないように保守党の仲間に届けましょう。
               </p>
               <ul className="list-disc pl-5 space-y-2 text-sm">
-                <li>画面下のカレーを左右に動かして敵を避けながら味方に当てます</li>
+                <li>画面下のカレーを左右に動かしてアンチを避けながら味方に当てます</li>
                 <li>味方キャラクターに当たると100円獲得できます</li>
-                <li>敵キャラクターに当たるとゲームオーバーです</li>
+                <li>アンチキャラクターに当たるとゲームオーバーです</li>
                 <li>ゲームオーバー後、名前を入力してスコアを登録できます</li>
               </ul>
             </div>
@@ -382,7 +394,7 @@ export default function CocoIchiGame() {
 
           {/* ランキング表示を追加 */}
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
-            <h2 className="text-xl font-bold text-amber-500 mb-4">ハイスコアランキング</h2>
+            <h2 className="text-xl font-bold text-amber-500 mb-4">愛国ランキング</h2>
             <div className="space-y-2">
               {highScores.map((score, index) => (
                 <div key={score.id} className="flex justify-between items-center">
