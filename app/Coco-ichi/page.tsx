@@ -64,6 +64,12 @@ export default function CocoIchiGame() {
   const [playerName, setPlayerName] = useState('');
   const [highScores, setHighScores] = useState<Score[]>([]);
 
+  // スコア更新用のRef追加
+  const lastScoreUpdateTimeRef = useRef<number>(0);
+
+  // 新しい状態変数を追加
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
     if (gameAreaRef.current) {
@@ -79,8 +85,10 @@ export default function CocoIchiGame() {
     setResultImage(randomImage);
     setGameOver(true);
     setShowScoreSubmit(true);
-    // サウンドを再生
-    gameEndSound?.play().catch(error => console.log('サウンド再生エラー:', error));
+    // サウンドの状態をチェックしてから再生
+    if (isSoundEnabled && gameEndSound) {
+      gameEndSound.play().catch(error => console.log('サウンド再生エラー:', error));
+    }
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -214,7 +222,7 @@ export default function CocoIchiGame() {
   useEffect(() => {
     if (!gameStarted || gameOver || currentScreen !== 'game') return;
 
-    const updateGame = () => {
+    const updateGame = (timestamp: number) => {
       setCharacters(prevCharacters => {
         const gameHeight = gameAreaRef.current?.clientHeight || 700;
         
@@ -226,8 +234,8 @@ export default function CocoIchiGame() {
           }))
           .filter(char => char.y < gameHeight + 100);
         
-        const horizontalMargin = 8;  // 左右のマージン8
-        const verticalMargin = 20;   // 上下のマージン20
+        const horizontalMargin = 8;
+        const verticalMargin = 20;
         const playerCollisionX = playerPosition.x + horizontalMargin;
         const playerCollisionY = playerPosition.y + verticalMargin;
         const playerCollisionWidth = playerSize.width - (horizontalMargin * 2);
@@ -252,13 +260,17 @@ export default function CocoIchiGame() {
             playerBottom > charCollisionY
           ) {
             if (char.type === 'ally') {
-              setScore(prev => prev + 100);
+              // 最後のスコア更新から100ms以上経過している場合のみスコアを更新
+              if (timestamp - lastScoreUpdateTimeRef.current > 100) {
+                setScore(prev => prev + 100);
+                lastScoreUpdateTimeRef.current = timestamp;
+              }
               // 衝突したキャラクターを配列から除外
               updatedCharacters = updatedCharacters.filter(c => c.id !== char.id);
             } else {
               handleGameOver();
             }
-            break; // 1回の衝突処理で終了
+            break;
           }
         }
 
@@ -379,6 +391,19 @@ export default function CocoIchiGame() {
           <h1 className="text-3xl font-bold text-yellow-500 mb-6">アンチ撃退! CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
+            <div className="flex justify-end -mb-6">
+              <button
+                onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                className="px-2 rounded-full bg-white"
+              >
+                {isSoundEnabled ? (
+                  <span className="text-2xl">🔊</span>
+                ) : (
+                  <span className="text-2xl">🔇</span>
+                )}
+              </button>
+            </div>
+
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
             <div className="mb-6">
               <p className="text-base mb-4">
