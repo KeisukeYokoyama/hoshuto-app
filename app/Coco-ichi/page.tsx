@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { createClient } from '@supabase/supabase-js';
 
 interface Character {
   id: number;
@@ -29,8 +30,10 @@ interface Score {
   date: string;
 }
 
-// APIのベースURLを環境変数から取得
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+// コンポーネントの先頭でAudioオブジェクトを定義
+const gameEndSound = typeof Audio !== 'undefined' 
+  ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
+  : null;
 
 export default function CocoIchiGame() {
   // 画面状態管理
@@ -59,6 +62,18 @@ export default function CocoIchiGame() {
   const [playerName, setPlayerName] = useState('');
   const [highScores, setHighScores] = useState<Score[]>([]);
 
+  // スコア更新用のRef追加
+  const lastScoreUpdateTimeRef = useRef<number>(0);
+
+  // 新しい状態変数を追加
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
+  // Supabaseクライアントをコンポーネント内で初期化
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+  );
+
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
     if (gameAreaRef.current) {
@@ -74,6 +89,10 @@ export default function CocoIchiGame() {
     setResultImage(randomImage);
     setGameOver(true);
     setShowScoreSubmit(true);
+    // サウンドの状態をチェックしてから再生
+    if (isSoundEnabled && gameEndSound) {
+      gameEndSound.play().catch(error => console.log('サウンド再生エラー:', error));
+    }
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -207,7 +226,7 @@ export default function CocoIchiGame() {
   useEffect(() => {
     if (!gameStarted || gameOver || currentScreen !== 'game') return;
 
-    const updateGame = () => {
+    const updateGame = (timestamp: number) => {
       setCharacters(prevCharacters => {
         const gameHeight = gameAreaRef.current?.clientHeight || 700;
         
@@ -219,8 +238,8 @@ export default function CocoIchiGame() {
           }))
           .filter(char => char.y < gameHeight + 100);
         
-        const horizontalMargin = 8;  // 左右のマージン8
-        const verticalMargin = 20;   // 上下のマージン20
+        const horizontalMargin = 8;
+        const verticalMargin = 20;
         const playerCollisionX = playerPosition.x + horizontalMargin;
         const playerCollisionY = playerPosition.y + verticalMargin;
         const playerCollisionWidth = playerSize.width - (horizontalMargin * 2);
@@ -245,13 +264,17 @@ export default function CocoIchiGame() {
             playerBottom > charCollisionY
           ) {
             if (char.type === 'ally') {
-              setScore(prev => prev + 100);
+              // 最後のスコア更新から100ms以上経過している場合のみスコアを更新
+              if (timestamp - lastScoreUpdateTimeRef.current > 100) {
+                setScore(prev => prev + 100);
+                lastScoreUpdateTimeRef.current = timestamp;
+              }
               // 衝突したキャラクターを配列から除外
               updatedCharacters = updatedCharacters.filter(c => c.id !== char.id);
             } else {
               handleGameOver();
             }
-            break; // 1回の衝突処理で終了
+            break;
           }
         }
 
@@ -310,17 +333,18 @@ export default function CocoIchiGame() {
     }
   }, [currentScreen, gameStarted, gameOver]);
 
-  // スコアを取得する関数
+  // スコアを取得する関数を修正
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/scores`);
-        const data = await response.json();
-        const scoresArray = Array.isArray(data) ? data : [];
-        setHighScores(scoresArray
-          .sort((a: Score, b: Score) => b.score - a.score)
-          .slice(0, 10)
-        );
+        const { data, error } = await supabase
+          .from('scores')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        setHighScores(data || []);
       } catch (error) {
         console.error('スコア取得エラー:', error);
       }
@@ -329,7 +353,7 @@ export default function CocoIchiGame() {
     fetchScores();
   }, []);
 
-  // スコア送信関数
+  // スコア送信関数を修正
   const submitScore = async () => {
     if (!playerName.trim()) return;
 
@@ -340,25 +364,22 @@ export default function CocoIchiGame() {
     };
 
     try {
-      const response = await fetch(`${apiBaseUrl}/scores`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(scoreData),
-      });
+      const { error } = await supabase
+        .from('scores')
+        .insert([scoreData]);
 
-      if (response.ok) {
-        const updatedResponse = await fetch(`${apiBaseUrl}/scores`);
-        const data = await updatedResponse.json();
-        const scoresArray = Array.isArray(data) ? data : [];
-        setHighScores(scoresArray
-          .sort((a: Score, b: Score) => b.score - a.score)
-          .slice(0, 10)
-        );
-        setShowScoreSubmit(false);
-        setPlayerName('');
-      }
+      if (error) throw error;
+
+      // スコアを再取得
+      const { data: newScores } = await supabase
+        .from('scores')
+        .select('*')
+        .order('score', { ascending: false })
+        .limit(10);
+
+      setHighScores(newScores || []);
+      setShowScoreSubmit(false);
+      setPlayerName('');
     } catch (error) {
       console.error('スコア送信エラー:', error);
     }
@@ -372,6 +393,19 @@ export default function CocoIchiGame() {
           <h1 className="text-3xl font-bold text-yellow-500 mb-6">アンチ撃退! CoCo壱ゲーム</h1>
           
           <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
+            <div className="flex justify-end -mb-6">
+              <button
+                onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                className="px-2 rounded-full bg-white"
+              >
+                {isSoundEnabled ? (
+                  <span className="text-2xl">🔊</span>
+                ) : (
+                  <span className="text-2xl">🔇</span>
+                )}
+              </button>
+            </div>
+
             <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
             <div className="mb-6">
               <p className="text-base mb-4">
