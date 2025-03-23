@@ -32,6 +32,11 @@ interface Score {
 // APIのベースURLを環境変数から取得
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
+// コンポーネントの先頭でAudioオブジェクトを定義
+const gameEndSound = typeof Audio !== 'undefined' 
+  ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
+  : null;
+
 export default function CocoIchiGame() {
   // 画面状態管理
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
@@ -74,6 +79,8 @@ export default function CocoIchiGame() {
     setResultImage(randomImage);
     setGameOver(true);
     setShowScoreSubmit(true);
+    // サウンドを再生
+    gameEndSound?.play().catch(error => console.log('サウンド再生エラー:', error));
   };
 
   // ゲームを終了してイントロ画面に戻る
