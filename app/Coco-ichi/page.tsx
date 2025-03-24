@@ -73,8 +73,16 @@ export default function CocoIchiGame() {
   // 新しい状態変数を追加
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
 
-  // サウンド初期化状態を管理
-  const [isSoundInitialized, setIsSoundInitialized] = useState(false);
+  // サウンドの状態管理を改善
+  const [soundContext, setSoundContext] = useState<{
+    gameEndSound: HTMLAudioElement | null;
+    isLoaded: boolean;
+    isPlaying: boolean;
+  }>({
+    gameEndSound: null,
+    isLoaded: false,
+    isPlaying: false
+  });
 
   // Supabaseクライアントをコンポーネント内で初期化
   const supabase = createClient(
@@ -97,10 +105,8 @@ export default function CocoIchiGame() {
     setResultImage(randomImage);
     setGameOver(true);
     setShowScoreSubmit(true);
-    // サウンドの状態をチェックしてから再生
-    if (isSoundEnabled && gameEndSound) {
-      gameEndSound.play().catch(error => console.log('サウンド再生エラー:', error));
-    }
+    
+    playGameEndSound();
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -112,6 +118,13 @@ export default function CocoIchiGame() {
 
   // ゲーム開始時の処理を修正
   const startGame = () => {
+    // サウンドの状態をリセット
+    if (soundContext.gameEndSound && soundContext.isPlaying) {
+      soundContext.gameEndSound.pause();
+      soundContext.gameEndSound.currentTime = 0;
+      setSoundContext(prev => ({ ...prev, isPlaying: false }));
+    }
+    
     setGameStarted(true);
     setGameOver(false);
     setScore(0);
@@ -393,26 +406,75 @@ export default function CocoIchiGame() {
     }
   };
 
-  // サウンド初期化関数
-  const initializeSound = () => {
-    if (!isSoundInitialized && dummySound) {
-      dummySound.play()
-        .then(() => {
-          setIsSoundInitialized(true);
-        })
-        .catch(error => console.log('サウンド初期化エラー:', error));
+  // サウンド初期化を改善
+  useEffect(() => {
+    if (typeof Audio !== 'undefined') {
+      const sound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
+      
+      // サウンドのロード完了を監視
+      sound.addEventListener('loadeddata', () => {
+        setSoundContext(prev => ({
+          ...prev,
+          gameEndSound: sound,
+          isLoaded: true
+        }));
+      });
+
+      // エラーハンドリング
+      sound.addEventListener('error', (e) => {
+        console.error('サウンドロードエラー:', e);
+        setSoundContext(prev => ({
+          ...prev,
+          isLoaded: false
+        }));
+      });
+
+      sound.load();
+
+      // クリーンアップ
+      return () => {
+        sound.removeEventListener('loadeddata', () => {});
+        sound.removeEventListener('error', () => {});
+      };
+    }
+  }, []);
+
+  // サウンド再生関数を改善
+  const playGameEndSound = async () => {
+    if (!isSoundEnabled || !soundContext.gameEndSound || !soundContext.isLoaded || soundContext.isPlaying) return;
+
+    try {
+      // 再生状態を管理
+      setSoundContext(prev => ({ ...prev, isPlaying: true }));
+      
+      // 再生前の状態をリセット
+      if (soundContext.gameEndSound.currentTime > 0) {
+        soundContext.gameEndSound.currentTime = 0;
+      }
+      
+      await soundContext.gameEndSound.play();
+      
+      // 再生完了時の処理
+      soundContext.gameEndSound.onended = () => {
+        setSoundContext(prev => ({ ...prev, isPlaying: false }));
+      };
+    } catch (error) {
+      console.error('サウンド再生エラー:', error);
+      setSoundContext(prev => ({ ...prev, isPlaying: false }));
     }
   };
 
   // スタートボタンのクリックハンドラーを修正
   const handleStartGame = () => {
-    initializeSound();
+    // iOS向けにサウンドの初期化を試行
+    if (soundContext.gameEndSound && !soundContext.isLoaded) {
+      soundContext.gameEndSound.load();
+    }
     startGame();
   };
 
   // サウンド設定ボタンのクリックハンドラーを修正
   const handleSoundToggle = () => {
-    initializeSound();
     setIsSoundEnabled(!isSoundEnabled);
   };
 
