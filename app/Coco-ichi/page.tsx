@@ -574,7 +574,10 @@ export default function CocoIchiGame() {
         
         <div className="flex mb-4 border-b">
           <button
-            onClick={() => handleTabChange('daily')}
+            onClick={(e) => {
+              e.preventDefault();
+              handleTabChange('daily');
+            }}
             className={`flex-1 px-4 py-2 ${
               rankingType === 'daily'
                 ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
@@ -584,7 +587,10 @@ export default function CocoIchiGame() {
             今日
           </button>
           <button
-            onClick={() => handleTabChange('weekly')}
+            onClick={(e) => {
+              e.preventDefault();
+              handleTabChange('weekly');
+            }}
             className={`flex-1 px-4 py-2 ${
               rankingType === 'weekly'
                 ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
@@ -594,7 +600,10 @@ export default function CocoIchiGame() {
             1週間
           </button>
           <button
-            onClick={() => handleTabChange('all')}
+            onClick={(e) => {
+              e.preventDefault();
+              handleTabChange('all');
+            }}
             className={`flex-1 px-4 py-2 ${
               rankingType === 'all'
                 ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
