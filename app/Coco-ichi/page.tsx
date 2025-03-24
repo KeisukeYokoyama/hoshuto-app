@@ -40,6 +40,15 @@ const dummySound = typeof Audio !== 'undefined'
   ? new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
   : null;
 
+// 新しいタイプを追加
+type RankingType = 'daily' | 'weekly' | 'all';
+
+// Supabaseクライアントをコンポーネントの外で初期化
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+);
+
 export default function CocoIchiGame() {
   // 画面状態管理
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
@@ -84,11 +93,11 @@ export default function CocoIchiGame() {
     isPlaying: false
   });
 
-  // Supabaseクライアントをコンポーネント内で初期化
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
-  );
+  // 新しいstate追加
+  const [rankingType, setRankingType] = useState<RankingType>('daily');
+  const [dailyScores, setDailyScores] = useState<Score[]>([]);
+  const [weeklyScores, setWeeklyScores] = useState<Score[]>([]);
+  const [allScores, setAllScores] = useState<Score[]>([]);
 
   // プレイヤー位置の更新関数
   const updatePlayerPosition = () => {
@@ -358,23 +367,58 @@ export default function CocoIchiGame() {
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const { data, error } = await supabase
-          .from('scores')
-          .select('*')
-          .order('score', { ascending: false })
-          .limit(10);
-        
+        // 今日の日付の開始時刻を取得（日本時間）
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // 1週間前の日付を取得（日本時間）
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        weekAgo.setHours(0, 0, 0, 0);
+
+        let data;
+        let error;
+
+        // 現在のタブに応じたデータのみを取得
+        switch (rankingType) {
+          case 'daily':
+            ({ data, error } = await supabase
+              .from('scores')
+              .select('*')
+              .gte('date', today.toISOString())
+              .order('score', { ascending: false })
+              .limit(10));
+            if (!error) setDailyScores(data || []);
+            break;
+          case 'weekly':
+            ({ data, error } = await supabase
+              .from('scores')
+              .select('*')
+              .gte('date', weekAgo.toISOString())
+              .order('score', { ascending: false })
+              .limit(10));
+            if (!error) setWeeklyScores(data || []);
+            break;
+          case 'all':
+            ({ data, error } = await supabase
+              .from('scores')
+              .select('*')
+              .order('score', { ascending: false })
+              .limit(10));
+            if (!error) setAllScores(data || []);
+            break;
+        }
+
         if (error) throw error;
-        setHighScores(data || []);
       } catch (error) {
         console.error('スコア取得エラー:', error);
       }
     };
 
     fetchScores();
-  }, []);
+  }, [rankingType]);
 
-  // スコア送信関数を修正
+  // スコア送信関数も修正
   const submitScore = async () => {
     if (!playerName.trim()) return;
 
@@ -391,14 +435,41 @@ export default function CocoIchiGame() {
 
       if (error) throw error;
 
-      // スコアを再取得
-      const { data: newScores } = await supabase
-        .from('scores')
-        .select('*')
-        .order('score', { ascending: false })
-        .limit(10);
+      // 現在のタブのスコアのみを再取得
+      const fetchCurrentScores = async () => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      setHighScores(newScores || []);
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        weekAgo.setHours(0, 0, 0, 0);
+
+        const { data } = await supabase
+          .from('scores')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(10);
+
+        setAllScores(data || []);
+
+        if (rankingType === 'daily' || rankingType === 'weekly') {
+          const startDate = rankingType === 'daily' ? today : weekAgo;
+          const { data: filteredData } = await supabase
+            .from('scores')
+            .select('*')
+            .gte('date', startDate.toISOString())
+            .order('score', { ascending: false })
+            .limit(10);
+
+          if (rankingType === 'daily') {
+            setDailyScores(filteredData || []);
+          } else {
+            setWeeklyScores(filteredData || []);
+          }
+        }
+      };
+
+      await fetchCurrentScores();
       setShowScoreSubmit(false);
       setPlayerName('');
     } catch (error) {
@@ -478,6 +549,82 @@ export default function CocoIchiGame() {
     setIsSoundEnabled(!isSoundEnabled);
   };
 
+  // ランキング表示用のスコアを取得
+  const getCurrentScores = () => {
+    switch (rankingType) {
+      case 'daily':
+        return dailyScores;
+      case 'weekly':
+        return weeklyScores;
+      case 'all':
+        return allScores;
+    }
+  };
+
+  // ランキング表示部分を修正
+  const RankingSection = () => {
+    // タブ切り替えハンドラーを修正
+    const handleTabChange = (type: RankingType) => {
+      setRankingType(type);
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
+        <h2 className="text-xl font-bold text-amber-500 mb-4">愛国ランキング</h2>
+        
+        <div className="flex mb-4 border-b">
+          <button
+            onClick={() => handleTabChange('daily')}
+            className={`flex-1 px-4 py-2 ${
+              rankingType === 'daily'
+                ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
+                : 'text-gray-500'
+            }`}
+          >
+            今日
+          </button>
+          <button
+            onClick={() => handleTabChange('weekly')}
+            className={`flex-1 px-4 py-2 ${
+              rankingType === 'weekly'
+                ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
+                : 'text-gray-500'
+            }`}
+          >
+            1週間
+          </button>
+          <button
+            onClick={() => handleTabChange('all')}
+            className={`flex-1 px-4 py-2 ${
+              rankingType === 'all'
+                ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
+                : 'text-gray-500'
+            }`}
+          >
+            すべて
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {(() => {
+            const scores = getCurrentScores();
+            if (!scores || scores.length === 0) {
+              return (
+                <p className="text-center text-gray-500">データがありません</p>
+              );
+            }
+            return scores.map((score, index) => (
+              <div key={score.id} className="flex justify-between items-center">
+                <span className="font-bold">{index + 1}. {score.name}</span>
+                <span className="text-green-600">{score.score.toLocaleString()}円</span>
+              </div>
+            ));
+          })()}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* イントロ画面 */}
@@ -520,18 +667,7 @@ export default function CocoIchiGame() {
             </button>
           </div>
 
-          {/* ランキング表示を追加 */}
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
-            <h2 className="text-xl font-bold text-amber-500 mb-4">愛国ランキング</h2>
-            <div className="space-y-2">
-              {highScores.map((score, index) => (
-                <div key={score.id} className="flex justify-between items-center">
-                  <span className="font-bold">{index + 1}. {score.name}</span>
-                  <span className="text-green-600">{score.score}円</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <RankingSection />
         </div>
       )}
 
@@ -543,7 +679,7 @@ export default function CocoIchiGame() {
               <h1 className="text-xl font-bold text-gray-800 ml-4">CoCo壱ゲーム</h1>
               <div className="flex items-center">
                 <span className="font-semibold mr-2">獲得賞金:</span>
-                <span className="text-green-600 font-bold text-xl mr-4">{score}円</span>
+                <span className="text-green-600 font-bold text-xl mr-4">{score.toLocaleString()}円</span>
               </div>
             </div>
             
@@ -551,7 +687,6 @@ export default function CocoIchiGame() {
               ref={gameAreaRef}
               onMouseMove={handleMouseMove}
               onTouchMove={handleTouchMove}
-              onTouchStart={(e) => e.preventDefault()}
               className="relative flex-grow w-full bg-yellow-300 overflow-hidden"
               style={{ minHeight: '70vh' }}
             >
@@ -601,7 +736,7 @@ export default function CocoIchiGame() {
                   <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
                     <div className="text-center">
                       <h2 className="text-2xl font-bold text-red-800 mb-4">ゲームオーバー</h2>
-                      <p className="text-xl font-semibold mb-4">獲得賞金: {score} 円</p>
+                      <p className="text-xl font-semibold mb-4">獲得賞金: {score.toLocaleString()} 円</p>
                     </div>
 
                     {showScoreSubmit && (
@@ -627,6 +762,7 @@ export default function CocoIchiGame() {
                         src={resultImage}
                         alt="結果画像"
                         fill
+                        sizes="(max-width: 768px) 100vw, 500px"
                         className="object-cover rounded-lg"
                       />
                     </div>

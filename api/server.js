@@ -11,6 +11,37 @@ const router = jsonServer.router(db);
 const middlewares = jsonServer.defaults();
 server.use(middlewares);
 
+// カスタムルートを追加
+server.get('/api/scores/daily', (req, res) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const scores = db.scores.filter(score => {
+    const scoreDate = new Date(score.date);
+    return scoreDate >= today;
+  });
+  
+  res.json(scores.sort((a, b) => b.score - a.score).slice(0, 10));
+});
+
+server.get('/api/scores/weekly', (req, res) => {
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  weekAgo.setHours(0, 0, 0, 0);
+  
+  const scores = db.scores.filter(score => {
+    const scoreDate = new Date(score.date);
+    return scoreDate >= weekAgo;
+  });
+  
+  res.json(scores.sort((a, b) => b.score - a.score).slice(0, 10));
+});
+
+server.get('/api/scores/all', (req, res) => {
+  const scores = db.scores.sort((a, b) => b.score - a.score).slice(0, 10);
+  res.json(scores);
+});
+
 // rewriteルールを追加
 server.use(jsonServer.rewriter({
   '/api/*': '/$1'  // /api/scores -> /scores
