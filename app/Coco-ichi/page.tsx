@@ -215,63 +215,17 @@ export default function CocoIchiGame() {
     }
   };
 
-  // スタートボタンのクリックハンドラーを修正
+  // スタートボタンのクリックハンドラーを修正（音声再生部分を削除）
   const handleStartGame = async () => {
-    try {
-      // まだ初期化されていない場合は初期化を試みる
-      if (!soundContext.isInitialized) {
-        // 初期化中は早期リターン
-        if (soundContext.gameStartSound || soundContext.gameEndSound) {
-          return;
-        }
-
-        // ユーザーインタラクションの中で初期化
-        const endSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
-        const startSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3');
-        
-        // 音声を読み込む
-        await Promise.all([
-          endSound.load(),
-          startSound.load()
-        ]);
-
-        // 初期化完了
-        setSoundContext({
-          gameEndSound: endSound,
-          gameStartSound: startSound,
-          isInitialized: true
-        });
-
-        // 直接スタートサウンドを再生（一度だけ）
-        if (isSoundEnabled) {
-          startSound.currentTime = 0;
-          try {
-            await startSound.play();
-          } catch (error) {
-            console.error('スタートサウンド再生エラー:', error);
-          }
-        }
-      } else {
-        // 既に初期化済みの場合は通常の再生（一度だけ）
-        if (isSoundEnabled && soundContext.gameStartSound && !soundContext.gameStartSound.paused) {
-          // 既に再生中の場合は再生しない
-          return;
-        }
-        
-        if (isSoundEnabled && soundContext.gameStartSound) {
-          soundContext.gameStartSound.currentTime = 0;
-          try {
-            await soundContext.gameStartSound.play();
-          } catch (error) {
-            console.error('スタートサウンド再生エラー:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('音声初期化/再生エラー:', error);
-    }
-
-    // ゲーム開始処理
+    // 音声関連の処理を削除
+    // if (!soundContext.isInitialized) {
+    //   await initializeAudioContext();
+    // }
+    
+    // if (soundContext.isInitialized) {
+    //   await playGameStartSound();
+    // }
+    
     startGame();
   };
 
