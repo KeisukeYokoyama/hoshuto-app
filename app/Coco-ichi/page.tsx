@@ -31,16 +31,6 @@ interface Score {
   date: string;
 }
 
-// コンポーネントの先頭でAudioオブジェクトを定義
-const gameEndSound = typeof Audio !== 'undefined' 
-  ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
-  : null;
-
-// 無音のダミーサウンドを追加
-const dummySound = typeof Audio !== 'undefined'
-  ? new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
-  : null;
-
 // 新しいタイプを追加
 type RankingType = 'daily' | 'weekly' | 'all';
 
@@ -49,12 +39,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 );
-
-// 日付表示用のフォーマット関数を追加
-const formatToJST = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Date(date.getTime() + (9 * 60 * 60 * 1000));
-};
 
 // 日付比較用のヘルパー関数を修正
 const isSameDay = (dateStr: string) => {
@@ -101,7 +85,6 @@ export default function CocoIchiGame() {
   // 新しいstate追加
   const [showScoreSubmit, setShowScoreSubmit] = useState(false);
   const [playerName, setPlayerName] = useState('');
-  const [highScores, setHighScores] = useState<Score[]>([]);
 
   // スコア更新用のRef追加
   const lastScoreUpdateTimeRef = useRef<number>(0);
@@ -212,12 +195,6 @@ export default function CocoIchiGame() {
 
   // ゲーム開始時の処理を修正
   const startGame = () => {
-    // サウンドの状態をリセット
-    if (soundContext.gameEndSound && soundContext.isInitialized) {
-      soundContext.gameEndSound.pause();
-      soundContext.gameEndSound.currentTime = 0;
-    }
-    
     setGameStarted(true);
     setGameOver(false);
     setScore(0);
