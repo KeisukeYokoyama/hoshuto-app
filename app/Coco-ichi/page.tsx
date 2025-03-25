@@ -191,15 +191,6 @@ export default function CocoIchiGame() {
     }
   };
 
-  // スタートボタンのクリックハンドラーを修正
-  const handleStartGame = async () => {
-    // 音声初期化のみを行い、実際の音声再生は行わない
-    if (!soundContext.isInitialized) {
-      await initializeAudioContext();
-    }
-    startGame();
-  };
-
   // ゲームオーバー時の処理を修正
   const handleGameOver = () => {
     const randomImage = resultImages[Math.floor(Math.random() * resultImages.length)];
@@ -707,7 +698,7 @@ export default function CocoIchiGame() {
               </div>
               
               <button
-                onClick={handleStartGame}
+                onClick={startGame}
                 className="w-full px-6 py-4 bg-yellow-300 text-gray-800 font-bold rounded-lg hover:bg-yellow-400 transition-colors text-xl"
               >
                 ゲームスタート
@@ -872,7 +863,7 @@ export default function CocoIchiGame() {
 
                     <div className="flex flex-col gap-3">
                       <button
-                        onClick={handleStartGame}
+                        onClick={startGame}
                         className="w-full px-6 py-3 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 transition-colors"
                       >
                         もう一度プレイ
