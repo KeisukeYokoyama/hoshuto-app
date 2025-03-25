@@ -144,7 +144,7 @@ export default function CocoIchiGame() {
     }
   };
 
-  // ユーザーインタラクションでの初期化
+  // ユーザーインタラクションでの初期化を修正
   useEffect(() => {
     const handleUserInteraction = async () => {
       if (!soundContext.isInitialized) {
@@ -152,14 +152,17 @@ export default function CocoIchiGame() {
       }
     };
 
-    window.addEventListener('touchstart', handleUserInteraction);
-    window.addEventListener('click', handleUserInteraction);
+    // ゲーム画面でのみイベントリスナーを追加
+    if (currentScreen === 'game') {
+      window.addEventListener('touchstart', handleUserInteraction);
+      window.addEventListener('click', handleUserInteraction);
 
-    return () => {
-      window.removeEventListener('touchstart', handleUserInteraction);
-      window.removeEventListener('click', handleUserInteraction);
-    };
-  }, [soundContext.isInitialized]);
+      return () => {
+        window.removeEventListener('touchstart', handleUserInteraction);
+        window.removeEventListener('click', handleUserInteraction);
+      };
+    }
+  }, [soundContext.isInitialized, currentScreen]);
 
   // サウンド再生関数を改善
   const playGameEndSound = async () => {
