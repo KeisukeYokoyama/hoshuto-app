@@ -140,35 +140,40 @@ export default function CocoIchiGame() {
     }
   };
 
-  // iOS向けの初期化関数を修正
+  // iOS向けの初期化関数
   const initializeAudioContext = async () => {
     if (!soundContext.isInitialized && typeof Audio !== 'undefined') {
       try {
+        // 全てのサウンドを同時に初期化
         const endSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
         const startSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3');
         
-        // 音声を読み込む
+        // 音量0で短い再生を試みる（iOS向け初期化）
+        endSound.volume = 0;
+        startSound.volume = 0;
+        
         await Promise.all([
-          endSound.load(),
-          startSound.load()
+          endSound.play().then(() => endSound.pause()),
+          startSound.play().then(() => startSound.pause())
         ]);
 
+        // 音量を戻す
+        endSound.volume = 1;
+        startSound.volume = 1;
+        
+        // 初期化完了
         setSoundContext({
           gameEndSound: endSound,
           gameStartSound: startSound,
           isInitialized: true
         });
-
-        return { endSound, startSound };
       } catch (error) {
         console.error('音声初期化エラー:', error);
-        return null;
       }
     }
-    return null;
   };
 
-  // useEffectを修正（イベントリスナーを削除）
+  // ユーザーインタラクションでの初期化
   useEffect(() => {
     const handleUserInteraction = async () => {
       if (!soundContext.isInitialized) {
@@ -176,11 +181,14 @@ export default function CocoIchiGame() {
       }
     };
 
-    // 初回のみ実行
-    handleUserInteraction();
+    window.addEventListener('touchstart', handleUserInteraction);
+    window.addEventListener('click', handleUserInteraction);
 
-    return () => {};
-  }, []);
+    return () => {
+      window.removeEventListener('touchstart', handleUserInteraction);
+      window.removeEventListener('click', handleUserInteraction);
+    };
+  }, [soundContext.isInitialized]);
 
   // サウンド再生関数を改善
   const playGameEndSound = async () => {
@@ -209,26 +217,61 @@ export default function CocoIchiGame() {
 
   // スタートボタンのクリックハンドラーを修正
   const handleStartGame = async () => {
-    if (!isSoundEnabled) {
-      startGame();
-      return;
-    }
-
     try {
+      // まだ初期化されていない場合は初期化を試みる
       if (!soundContext.isInitialized) {
-        const sounds = await initializeAudioContext();
-        if (sounds) {
-          sounds.startSound.currentTime = 0;
-          await sounds.startSound.play();
+        // 初期化中は早期リターン
+        if (soundContext.gameStartSound || soundContext.gameEndSound) {
+          return;
         }
-      } else if (soundContext.gameStartSound) {
-        soundContext.gameStartSound.currentTime = 0;
-        await soundContext.gameStartSound.play();
+
+        // ユーザーインタラクションの中で初期化
+        const endSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
+        const startSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3');
+        
+        // 音声を読み込む
+        await Promise.all([
+          endSound.load(),
+          startSound.load()
+        ]);
+
+        // 初期化完了
+        setSoundContext({
+          gameEndSound: endSound,
+          gameStartSound: startSound,
+          isInitialized: true
+        });
+
+        // 直接スタートサウンドを再生（一度だけ）
+        if (isSoundEnabled) {
+          startSound.currentTime = 0;
+          try {
+            await startSound.play();
+          } catch (error) {
+            console.error('スタートサウンド再生エラー:', error);
+          }
+        }
+      } else {
+        // 既に初期化済みの場合は通常の再生（一度だけ）
+        if (isSoundEnabled && soundContext.gameStartSound && !soundContext.gameStartSound.paused) {
+          // 既に再生中の場合は再生しない
+          return;
+        }
+        
+        if (isSoundEnabled && soundContext.gameStartSound) {
+          soundContext.gameStartSound.currentTime = 0;
+          try {
+            await soundContext.gameStartSound.play();
+          } catch (error) {
+            console.error('スタートサウンド再生エラー:', error);
+          }
+        }
       }
     } catch (error) {
-      console.error('音声再生エラー:', error);
+      console.error('音声初期化/再生エラー:', error);
     }
 
+    // ゲーム開始処理
     startGame();
   };
 
