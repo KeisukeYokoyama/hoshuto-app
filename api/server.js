@@ -13,7 +13,7 @@ server.use(middlewares);
 
 // カスタムルートを追加
 server.get('/api/scores/daily', (req, res) => {
-  const today = new Date();
+  const today = getJSTDate(new Date());
   today.setHours(0, 0, 0, 0);
   
   const scores = db.scores.filter(score => {
@@ -25,7 +25,7 @@ server.get('/api/scores/daily', (req, res) => {
 });
 
 server.get('/api/scores/weekly', (req, res) => {
-  const weekAgo = new Date();
+  const weekAgo = getJSTDate(new Date());
   weekAgo.setDate(weekAgo.getDate() - 7);
   weekAgo.setHours(0, 0, 0, 0);
   
@@ -57,3 +57,8 @@ server.listen(PORT, () => {
 });
 
 module.exports = server;
+
+// 日付処理を行う関数を追加
+function getJSTDate(date) {
+  return new Date(date.getTime() + (9 * 60 * 60 * 1000));
+}
