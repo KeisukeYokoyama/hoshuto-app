@@ -576,8 +576,10 @@ export default function CocoIchiGame() {
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation(); // iOSでのイベントバブリングも防止
               handleTabChange('daily');
             }}
+            type="button" // iOSでのデフォルト送信を確実に防止
             className={`flex-1 px-4 py-2 ${
               rankingType === 'daily'
                 ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
@@ -589,8 +591,10 @@ export default function CocoIchiGame() {
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation(); // iOSでのイベントバブリングも防止
               handleTabChange('weekly');
             }}
+            type="button" // iOSでのデフォルト送信を確実に防止
             className={`flex-1 px-4 py-2 ${
               rankingType === 'weekly'
                 ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
@@ -602,8 +606,10 @@ export default function CocoIchiGame() {
           <button
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation(); // iOSでのイベントバブリングも防止
               handleTabChange('all');
             }}
+            type="button" // iOSでのデフォルト送信を確実に防止
             className={`flex-1 px-4 py-2 ${
               rankingType === 'all'
                 ? 'border-b-2 border-amber-500 text-amber-500 font-bold'
