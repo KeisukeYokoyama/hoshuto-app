@@ -36,11 +36,6 @@ const gameEndSound = typeof Audio !== 'undefined'
   ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
   : null;
 
-// コンポーネントの先頭でAudioオブジェクトを定義（既存のgameEndSoundの近くに追加）
-const gameStartSound = typeof Audio !== 'undefined' 
-  ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3')
-  : null;
-
 // 無音のダミーサウンドを追加
 const dummySound = typeof Audio !== 'undefined'
   ? new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
@@ -117,11 +112,9 @@ export default function CocoIchiGame() {
   // サウンドの状態管理を改善
   const [soundContext, setSoundContext] = useState<{
     gameEndSound: HTMLAudioElement | null;
-    gameStartSound: HTMLAudioElement | null;
     isInitialized: boolean;  // 初期化状態のみを管理
   }>({
     gameEndSound: null,
-    gameStartSound: null,
     isInitialized: false
   });
 
@@ -144,27 +137,19 @@ export default function CocoIchiGame() {
   const initializeAudioContext = async () => {
     if (!soundContext.isInitialized && typeof Audio !== 'undefined') {
       try {
-        // 全てのサウンドを同時に初期化
+        // endSoundのみを初期化
         const endSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
-        const startSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3');
         
         // 音量0で短い再生を試みる（iOS向け初期化）
         endSound.volume = 0;
-        startSound.volume = 0;
-        
-        await Promise.all([
-          endSound.play().then(() => endSound.pause()),
-          startSound.play().then(() => startSound.pause())
-        ]);
+        await endSound.play().then(() => endSound.pause());
 
         // 音量を戻す
         endSound.volume = 1;
-        startSound.volume = 1;
         
         // 初期化完了
         setSoundContext({
           gameEndSound: endSound,
-          gameStartSound: startSound,
           isInitialized: true
         });
       } catch (error) {
@@ -203,29 +188,8 @@ export default function CocoIchiGame() {
     }
   };
 
-  const playGameStartSound = async () => {
-    if (!isSoundEnabled || !soundContext.gameStartSound || !soundContext.isInitialized) return;
-
-    try {
-      const sound = soundContext.gameStartSound;
-      sound.currentTime = 0;
-      await sound.play();
-    } catch (error) {
-      console.error('ゲームスタート音声再生エラー:', error);
-    }
-  };
-
-  // スタートボタンのクリックハンドラーを修正（音声再生部分を削除）
+  // スタートボタンのクリックハンドラーを修正
   const handleStartGame = async () => {
-    // 音声関連の処理を削除
-    // if (!soundContext.isInitialized) {
-    //   await initializeAudioContext();
-    // }
-    
-    // if (soundContext.isInitialized) {
-    //   await playGameStartSound();
-    // }
-    
     startGame();
   };
 
