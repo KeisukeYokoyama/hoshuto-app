@@ -133,7 +133,7 @@ export default function CocoIchiGame() {
     }
   };
 
-  // iOS向けの初期化関数
+  // iOS向けの初期化関数を修正
   const initializeAudioContext = async () => {
     if (!soundContext.isInitialized && typeof Audio !== 'undefined') {
       try {
@@ -142,7 +142,10 @@ export default function CocoIchiGame() {
         
         // 音量0で短い再生を試みる（iOS向け初期化）
         endSound.volume = 0;
-        await endSound.play().then(() => endSound.pause());
+        await endSound.play().then(() => {
+          endSound.pause();
+          endSound.currentTime = 0;  // 確実に最初に戻す
+        });
 
         // 音量を戻す
         endSound.volume = 1;
@@ -190,6 +193,10 @@ export default function CocoIchiGame() {
 
   // スタートボタンのクリックハンドラーを修正
   const handleStartGame = async () => {
+    // 音声初期化のみを行い、実際の音声再生は行わない
+    if (!soundContext.isInitialized) {
+      await initializeAudioContext();
+    }
     startGame();
   };
 
