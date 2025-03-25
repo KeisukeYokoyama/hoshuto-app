@@ -740,13 +740,13 @@ export default function CocoIchiGame() {
 
       {/* ゲーム画面 */}
       {currentScreen === 'game' && (
-        <div className="fixed inset-0 bg-white z-10 flex flex-col items-center justify-start pb-16">
-          <div className="w-full max-w-md mx-auto flex flex-col h-full pt-2">
-            <div className="flex justify-between items-center mb-2">
-              <h1 className="text-xl font-bold text-gray-800 ml-4">CoCo壱ゲーム</h1>
+        <div className="fixed inset-0 bg-white z-10 flex flex-col items-center justify-start">
+          <div className="w-full max-w-md mx-auto flex flex-col h-full">
+            <div className="flex justify-between items-center mb-2 px-4 pt-2">
+              <h1 className="text-xl font-bold text-gray-800">CoCo壱ゲーム</h1>
               <div className="flex items-center">
                 <span className="font-semibold mr-2">獲得賞金:</span>
-                <span className="text-green-600 font-bold text-xl mr-4">{score.toLocaleString()}円</span>
+                <span className="text-green-600 font-bold text-xl">{score.toLocaleString()}円</span>
               </div>
             </div>
             
@@ -755,7 +755,12 @@ export default function CocoIchiGame() {
               onMouseMove={handleMouseMove}
               onTouchMove={handleTouchMove}
               className="relative flex-grow w-full bg-yellow-300 overflow-hidden"
-              style={{ minHeight: '70vh' }}
+              style={{ 
+                width: '100%',
+                maxWidth: '400px',
+                height: '600px',
+                margin: '0 auto'
+              }}
             >
               {gameStarted && !gameOver && (
                 <div
