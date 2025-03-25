@@ -688,7 +688,7 @@ export default function CocoIchiGame() {
           </div>
 
           {/* Coco-ichi専用フッター */}
-          <footer className="bg-gray-100 border-t mt-8">
+          <footer className="bg-gray-100 border-t mt-2">
             <div className="max-w-4xl mx-auto py-8 px-4">
               <div className="text-center mb-6">
                 <h3 className="text-lg font-bold text-gray-700 mb-2">
