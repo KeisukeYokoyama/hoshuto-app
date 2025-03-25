@@ -678,7 +678,11 @@ export default function CocoIchiGame() {
               </div>
               
               <button
-                onClick={startGame}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation(); // イベントの伝播を停止
+                  startGame();
+                }}
                 className="w-full px-6 py-4 bg-yellow-300 text-gray-800 font-bold rounded-lg hover:bg-yellow-400 transition-colors text-xl"
               >
                 ゲームスタート
