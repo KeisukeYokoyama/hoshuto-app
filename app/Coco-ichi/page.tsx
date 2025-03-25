@@ -616,7 +616,7 @@ export default function CocoIchiGame() {
                 : 'text-gray-500'
             }`}
           >
-            すべて
+            全期間
           </button>
         </div>
 
