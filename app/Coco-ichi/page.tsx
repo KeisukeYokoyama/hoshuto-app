@@ -149,7 +149,22 @@ export default function CocoIchiGame() {
     setGameOver(true);
     setShowScoreSubmit(true);
     
-    playGameEndSound();
+    // iOS対応のため、音声再生を非同期で実行
+    setTimeout(() => {
+      if (soundContext.gameEndSound && isSoundEnabled) {
+        // 現在再生中の場合は停止
+        soundContext.gameEndSound.pause();
+        soundContext.gameEndSound.currentTime = 0;
+        
+        // 音声再生を試みる
+        const playPromise = soundContext.gameEndSound.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.log('音声再生エラー:', error);
+          });
+        }
+      }
+    }, 100);
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -563,17 +578,20 @@ export default function CocoIchiGame() {
     if (!isSoundEnabled || !soundContext.gameEndSound || !soundContext.isLoaded || soundContext.isPlaying) return;
 
     try {
-      // 再生状態を管理
+      // iOS対応のため、一度ダミーサウンドを再生
+      if (dummySound) {
+        await dummySound.play();
+        dummySound.pause();
+      }
+      
       setSoundContext(prev => ({ ...prev, isPlaying: true }));
       
-      // 再生前の状態をリセット
       if (soundContext.gameEndSound.currentTime > 0) {
         soundContext.gameEndSound.currentTime = 0;
       }
       
       await soundContext.gameEndSound.play();
       
-      // 再生完了時の処理
       soundContext.gameEndSound.onended = () => {
         setSoundContext(prev => ({ ...prev, isPlaying: false }));
       };
@@ -641,13 +659,6 @@ export default function CocoIchiGame() {
     const handleTabChange = (type: RankingType) => {
       setRankingType(type);
     };
-
-    console.log('Current date (JST):', new Date(Date.now() + (9 * 60 * 60 * 1000)));
-    console.log('Scores:', dailyScores.map(score => ({
-      date: score.date,
-      jstDate: new Date(new Date(score.date).getTime() + (9 * 60 * 60 * 1000)),
-      isToday: isSameDay(score.date)
-    })));
 
     return (
       <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
