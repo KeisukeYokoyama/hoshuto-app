@@ -55,6 +55,32 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 );
 
+// 日付表示用のフォーマット関数を追加
+const formatToJST = (dateString: string) => {
+  const date = new Date(dateString);
+  return new Date(date.getTime() + (9 * 60 * 60 * 1000));
+};
+
+// 日付比較用のヘルパー関数を修正
+const isSameDay = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  
+  return date.getFullYear() === now.getFullYear() &&
+         date.getMonth() === now.getMonth() &&
+         date.getDate() === now.getDate();
+};
+
+const isWithinLastWeek = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const weekAgo = new Date(now);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  weekAgo.setHours(0, 0, 0, 0);
+  
+  return date >= weekAgo;
+};
+
 export default function CocoIchiGame() {
   // 画面状態管理
   const [currentScreen, setCurrentScreen] = useState<'intro' | 'game'>('intro');
@@ -375,15 +401,6 @@ export default function CocoIchiGame() {
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        // 日本時間での今日の0時を取得
-        const today = new Date();
-        const jstToday = new Date(today.getTime() + (9 * 60 * 60 * 1000));
-        jstToday.setHours(0, 0, 0, 0);
-
-        // 日本時間での1週間前の0時を取得
-        const weekAgo = new Date(jstToday);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-
         let data;
         let error;
 
@@ -392,7 +409,7 @@ export default function CocoIchiGame() {
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .gte('date', jstToday.toISOString())
+              .gte('date', new Date().toISOString())
               .order('score', { ascending: false })
               .limit(10));
             if (!error) setDailyScores(data || []);
@@ -401,7 +418,7 @@ export default function CocoIchiGame() {
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .gte('date', weekAgo.toISOString())
+              .gte('date', new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString())
               .order('score', { ascending: false })
               .limit(10));
             if (!error) setWeeklyScores(data || []);
@@ -448,38 +465,39 @@ export default function CocoIchiGame() {
 
       // 現在のタブのスコアのみを再取得
       const fetchCurrentScores = async () => {
-        // 日本時間での今日の0時を取得
-        const today = new Date();
-        const jstToday = new Date(today.getTime() + (9 * 60 * 60 * 1000));
-        jstToday.setHours(0, 0, 0, 0);
+        let data;
+        let error;
 
-        // 日本時間での1週間前の0時を取得
-        const weekAgo = new Date(jstToday);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-
-        const { data } = await supabase
-          .from('scores')
-          .select('*')
-          .order('score', { ascending: false })
-          .limit(10);
-
-        setAllScores(data || []);
-
-        if (rankingType === 'daily' || rankingType === 'weekly') {
-          const startDate = rankingType === 'daily' ? jstToday : weekAgo;
-          const { data: filteredData } = await supabase
-            .from('scores')
-            .select('*')
-            .gte('date', startDate.toISOString())
-            .order('score', { ascending: false })
-            .limit(10);
-
-          if (rankingType === 'daily') {
-            setDailyScores(filteredData || []);
-          } else {
-            setWeeklyScores(filteredData || []);
-          }
+        switch (rankingType) {
+          case 'daily':
+            ({ data, error } = await supabase
+              .from('scores')
+              .select('*')
+              .gte('date', new Date().toISOString())
+              .order('score', { ascending: false })
+              .limit(10));
+            if (!error) setDailyScores(data || []);
+            break;
+          case 'weekly':
+            ({ data, error } = await supabase
+              .from('scores')
+              .select('*')
+              .gte('date', new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString())
+              .order('score', { ascending: false })
+              .limit(10));
+            if (!error) setWeeklyScores(data || []);
+            break;
+          case 'all':
+            ({ data, error } = await supabase
+              .from('scores')
+              .select('*')
+              .order('score', { ascending: false })
+              .limit(10));
+            if (!error) setAllScores(data || []);
+            break;
         }
+
+        if (error) throw error;
       };
 
       await fetchCurrentScores();
@@ -603,14 +621,18 @@ export default function CocoIchiGame() {
 
   // ランキング表示用のスコアを取得
   const getCurrentScores = () => {
-    switch (rankingType) {
-      case 'daily':
-        return dailyScores;
-      case 'weekly':
-        return weeklyScores;
-      case 'all':
-        return allScores;
-    }
+    const scores = (() => {
+      switch (rankingType) {
+        case 'daily':
+          return dailyScores.filter(score => isSameDay(score.date));
+        case 'weekly':
+          return weeklyScores.filter(score => isWithinLastWeek(score.date));
+        case 'all':
+          return allScores;
+      }
+    })();
+
+    return scores;
   };
 
   // ランキング表示部分を修正
@@ -619,6 +641,13 @@ export default function CocoIchiGame() {
     const handleTabChange = (type: RankingType) => {
       setRankingType(type);
     };
+
+    console.log('Current date (JST):', new Date(Date.now() + (9 * 60 * 60 * 1000)));
+    console.log('Scores:', dailyScores.map(score => ({
+      date: score.date,
+      jstDate: new Date(new Date(score.date).getTime() + (9 * 60 * 60 * 1000)),
+      isToday: isSameDay(score.date)
+    })));
 
     return (
       <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
