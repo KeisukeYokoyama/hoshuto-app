@@ -31,21 +31,6 @@ interface Score {
   date: string;
 }
 
-// コンポーネントの先頭でAudioオブジェクトを定義
-const gameEndSound = typeof Audio !== 'undefined' 
-  ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3')
-  : null;
-
-// コンポーネントの先頭でAudioオブジェクトを定義（既存のgameEndSoundの近くに追加）
-const gameStartSound = typeof Audio !== 'undefined' 
-  ? new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3')
-  : null;
-
-// 無音のダミーサウンドを追加
-const dummySound = typeof Audio !== 'undefined'
-  ? new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV')
-  : null;
-
 // 新しいタイプを追加
 type RankingType = 'daily' | 'weekly' | 'all';
 
@@ -54,12 +39,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
 );
-
-// 日付表示用のフォーマット関数を追加
-const formatToJST = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Date(date.getTime() + (9 * 60 * 60 * 1000));
-};
 
 // 日付比較用のヘルパー関数を修正
 const isSameDay = (dateStr: string) => {
@@ -106,7 +85,6 @@ export default function CocoIchiGame() {
   // 新しいstate追加
   const [showScoreSubmit, setShowScoreSubmit] = useState(false);
   const [playerName, setPlayerName] = useState('');
-  const [highScores, setHighScores] = useState<Score[]>([]);
 
   // スコア更新用のRef追加
   const lastScoreUpdateTimeRef = useRef<number>(0);
@@ -117,14 +95,10 @@ export default function CocoIchiGame() {
   // サウンドの状態管理を改善
   const [soundContext, setSoundContext] = useState<{
     gameEndSound: HTMLAudioElement | null;
-    gameStartSound: HTMLAudioElement | null;
-    isLoaded: boolean;
-    isPlaying: boolean;
+    isInitialized: boolean;  // 初期化状態のみを管理
   }>({
     gameEndSound: null,
-    gameStartSound: null,
-    isLoaded: false,
-    isPlaying: false
+    isInitialized: false
   });
 
   // 新しいstate追加
@@ -142,6 +116,64 @@ export default function CocoIchiGame() {
     }
   };
 
+  // iOS向けの初期化関数を修正
+  const initializeAudioContext = async () => {
+    if (!soundContext.isInitialized && typeof Audio !== 'undefined') {
+      try {
+        // endSoundのみを初期化
+        const endSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
+        
+        // 音量0で短い再生を試みる（iOS向け初期化）
+        endSound.volume = 0;
+        await endSound.play().then(() => {
+          endSound.pause();
+          endSound.currentTime = 0;  // 確実に最初に戻す
+        });
+
+        // 音量を戻す
+        endSound.volume = 1;
+        
+        // 初期化完了
+        setSoundContext({
+          gameEndSound: endSound,
+          isInitialized: true
+        });
+      } catch (error) {
+        console.error('音声初期化エラー:', error);
+      }
+    }
+  };
+
+  // ユーザーインタラクションでの初期化
+  useEffect(() => {
+    const handleUserInteraction = async () => {
+      if (!soundContext.isInitialized) {
+        await initializeAudioContext();
+      }
+    };
+
+    window.addEventListener('touchstart', handleUserInteraction);
+    window.addEventListener('click', handleUserInteraction);
+
+    return () => {
+      window.removeEventListener('touchstart', handleUserInteraction);
+      window.removeEventListener('click', handleUserInteraction);
+    };
+  }, [soundContext.isInitialized]);
+
+  // サウンド再生関数を改善
+  const playGameEndSound = async () => {
+    if (!isSoundEnabled || !soundContext.gameEndSound || !soundContext.isInitialized) return;
+
+    try {
+      const sound = soundContext.gameEndSound;
+      sound.currentTime = 0;
+      await sound.play();
+    } catch (error) {
+      console.error('ゲームオーバー音声再生エラー:', error);
+    }
+  };
+
   // ゲームオーバー時の処理を修正
   const handleGameOver = () => {
     const randomImage = resultImages[Math.floor(Math.random() * resultImages.length)];
@@ -149,22 +181,9 @@ export default function CocoIchiGame() {
     setGameOver(true);
     setShowScoreSubmit(true);
     
-    // iOS対応のため、音声再生を非同期で実行
-    setTimeout(() => {
-      if (soundContext.gameEndSound && isSoundEnabled) {
-        // 現在再生中の場合は停止
-        soundContext.gameEndSound.pause();
-        soundContext.gameEndSound.currentTime = 0;
-        
-        // 音声再生を試みる
-        const playPromise = soundContext.gameEndSound.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.log('音声再生エラー:', error);
-          });
-        }
-      }
-    }, 100);
+    if (soundContext.isInitialized) {
+      playGameEndSound();
+    }
   };
 
   // ゲームを終了してイントロ画面に戻る
@@ -176,13 +195,6 @@ export default function CocoIchiGame() {
 
   // ゲーム開始時の処理を修正
   const startGame = () => {
-    // サウンドの状態をリセット
-    if (soundContext.gameEndSound && soundContext.isPlaying) {
-      soundContext.gameEndSound.pause();
-      soundContext.gameEndSound.currentTime = 0;
-      setSoundContext(prev => ({ ...prev, isPlaying: false }));
-    }
-    
     setGameStarted(true);
     setGameOver(false);
     setScore(0);
@@ -523,120 +535,6 @@ export default function CocoIchiGame() {
     }
   };
 
-  // サウンド初期化を改善
-  useEffect(() => {
-    if (typeof Audio !== 'undefined') {
-      const endSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_end.mp3');
-      const startSound = new Audio('/sounds/ArimotoMaker/Coco-ichi/game_start.mp3');
-      
-      let loadedCount = 0;
-      const totalSounds = 2;
-
-      const checkAllLoaded = () => {
-        loadedCount++;
-        if (loadedCount === totalSounds) {
-          setSoundContext(prev => ({
-            ...prev,
-            gameEndSound: endSound,
-            gameStartSound: startSound,
-            isLoaded: true
-          }));
-        }
-      };
-
-      // サウンドのロード完了を監視
-      endSound.addEventListener('loadeddata', checkAllLoaded);
-      startSound.addEventListener('loadeddata', checkAllLoaded);
-
-      // エラーハンドリング
-      const handleError = (e: Event) => {
-        console.error('サウンドロードエラー:', e);
-        setSoundContext(prev => ({
-          ...prev,
-          isLoaded: false
-        }));
-      };
-
-      endSound.addEventListener('error', handleError);
-      startSound.addEventListener('error', handleError);
-
-      endSound.load();
-      startSound.load();
-
-      // クリーンアップ
-      return () => {
-        endSound.removeEventListener('loadeddata', checkAllLoaded);
-        startSound.removeEventListener('loadeddata', checkAllLoaded);
-        endSound.removeEventListener('error', handleError);
-        startSound.removeEventListener('error', handleError);
-      };
-    }
-  }, []);
-
-  // サウンド再生関数を改善
-  const playGameEndSound = async () => {
-    if (!isSoundEnabled || !soundContext.gameEndSound || !soundContext.isLoaded || soundContext.isPlaying) return;
-
-    try {
-      // iOS対応のため、一度ダミーサウンドを再生
-      if (dummySound) {
-        await dummySound.play();
-        dummySound.pause();
-      }
-      
-      setSoundContext(prev => ({ ...prev, isPlaying: true }));
-      
-      if (soundContext.gameEndSound.currentTime > 0) {
-        soundContext.gameEndSound.currentTime = 0;
-      }
-      
-      await soundContext.gameEndSound.play();
-      
-      soundContext.gameEndSound.onended = () => {
-        setSoundContext(prev => ({ ...prev, isPlaying: false }));
-      };
-    } catch (error) {
-      console.error('サウンド再生エラー:', error);
-      setSoundContext(prev => ({ ...prev, isPlaying: false }));
-    }
-  };
-
-  // スタートサウンド再生関数を追加
-  const playGameStartSound = async () => {
-    if (!isSoundEnabled || !soundContext.gameStartSound || !soundContext.isLoaded || soundContext.isPlaying) return;
-
-    try {
-      setSoundContext(prev => ({ ...prev, isPlaying: true }));
-      
-      if (soundContext.gameStartSound.currentTime > 0) {
-        soundContext.gameStartSound.currentTime = 0;
-      }
-      
-      await soundContext.gameStartSound.play();
-      
-      soundContext.gameStartSound.onended = () => {
-        setSoundContext(prev => ({ ...prev, isPlaying: false }));
-      };
-    } catch (error) {
-      console.error('サウンド再生エラー:', error);
-      setSoundContext(prev => ({ ...prev, isPlaying: false }));
-    }
-  };
-
-  // スタートボタンのクリックハンドラーを修正
-  const handleStartGame = () => {
-    if (soundContext.gameStartSound && !soundContext.isLoaded) {
-      soundContext.gameStartSound.load();
-    }
-    playGameStartSound();
-    startGame();
-  };
-
-  // サウンド設定ボタンのクリックハンドラーを修正
-  const handleSoundToggle = () => {
-    setIsSoundEnabled(!isSoundEnabled);
-  };
-
   // ランキング表示用のスコアを取得
   const getCurrentScores = () => {
     const scores = (() => {
@@ -732,6 +630,15 @@ export default function CocoIchiGame() {
     );
   };
 
+  // サウンド設定ボタンのクリックハンドラーを追加
+  const handleSoundToggle = async () => {
+    // サウンドが無効から有効に切り替わる時は初期化を試みる
+    if (!isSoundEnabled && !soundContext.isInitialized) {
+      await initializeAudioContext();
+    }
+    setIsSoundEnabled(!isSoundEnabled);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* イントロ画面 */}
@@ -768,7 +675,7 @@ export default function CocoIchiGame() {
               </div>
               
               <button
-                onClick={handleStartGame}
+                onClick={startGame}
                 className="w-full px-6 py-4 bg-yellow-300 text-gray-800 font-bold rounded-lg hover:bg-yellow-400 transition-colors text-xl"
               >
                 ゲームスタート
@@ -933,7 +840,7 @@ export default function CocoIchiGame() {
 
                     <div className="flex flex-col gap-3">
                       <button
-                        onClick={handleStartGame}
+                        onClick={startGame}
                         className="w-full px-6 py-3 bg-amber-600 text-white font-bold rounded-lg hover:bg-amber-700 transition-colors"
                       >
                         もう一度プレイ
