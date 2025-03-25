@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
 interface Character {
   id: number;
@@ -644,51 +645,102 @@ export default function CocoIchiGame() {
     <div className="min-h-screen bg-white">
       {/* イントロ画面 */}
       {currentScreen === 'intro' && (
-        <div className="flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold text-yellow-500 mb-6">アンチ撃退! CoCo壱ゲーム</h1>
-          
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
-            <div className="flex justify-end -mb-6">
+        <>
+          <div className="flex flex-col items-center justify-center p-4">
+            <h1 className="text-2xl font-bold text-yellow-500 mb-6 mt-4">アンチ撃退! CoCo壱ゲーム</h1>
+            
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-md w-full">
+              <div className="flex justify-end -mb-6">
+                <button
+                  onClick={handleSoundToggle}
+                  className="px-2 rounded-full bg-white"
+                >
+                  {isSoundEnabled ? (
+                    <span className="text-2xl">🔊</span>
+                  ) : (
+                    <span className="text-2xl">🔇</span>
+                  )}
+                </button>
+              </div>
+
+              <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
+              <div className="mb-6">
+                <p className="text-base mb-4">
+                  CoCo壱をアンチに取られないように保守党の仲間に届けましょう。
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-sm">
+                  <li>画面下のカレーを左右に動かしてアンチを避けながら味方に当てます</li>
+                  <li>味方キャラクターに当たると100円獲得できます</li>
+                  <li>アンチキャラクターに当たるとゲームオーバーです</li>
+                  <li>ゲームオーバー後、名前を入力してスコアを登録できます</li>
+                </ul>
+              </div>
+              
               <button
-                onClick={handleSoundToggle}
-                className="px-2 rounded-full bg-white"
+                onClick={handleStartGame}
+                className="w-full px-6 py-4 bg-yellow-300 text-gray-800 font-bold rounded-lg hover:bg-yellow-400 transition-colors text-xl"
               >
-                {isSoundEnabled ? (
-                  <span className="text-2xl">🔊</span>
-                ) : (
-                  <span className="text-2xl">🔇</span>
-                )}
+                ゲームスタート
               </button>
             </div>
 
-            <h2 className="text-xl font-bold text-amber-500 mb-4">ゲームの遊び方</h2>
-            <div className="mb-6">
-              <p className="text-base mb-4">
-                CoCo壱をアンチに取られないように保守党の仲間に届けましょう。
-              </p>
-              <ul className="list-disc pl-5 space-y-2 text-sm">
-                <li>画面下のカレーを左右に動かしてアンチを避けながら味方に当てます</li>
-                <li>味方キャラクターに当たると100円獲得できます</li>
-                <li>アンチキャラクターに当たるとゲームオーバーです</li>
-                <li>ゲームオーバー後、名前を入力してスコアを登録できます</li>
-              </ul>
-            </div>
-            
-            <button
-              onClick={handleStartGame}
-              className="w-full px-6 py-4 bg-yellow-300 text-gray-800 font-bold rounded-lg hover:bg-yellow-400 transition-colors text-xl"
-            >
-              ゲームスタート
-            </button>
+            <RankingSection />
           </div>
 
-          <RankingSection />
-        </div>
+          {/* Coco-ichi専用フッター */}
+          <footer className="bg-gray-100 border-t mt-8">
+            <div className="max-w-4xl mx-auto py-8 px-4">
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-bold text-gray-700 mb-2">
+                  保守党アプリ集
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <Link 
+                  href="/Karuta" 
+                  className="flex flex-col items-center p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+                >
+                  <span className="text-xl mb-2">🎴</span>
+                  <span className="text-sm font-medium text-gray-700">保守党かるた</span>
+                </Link>
+                
+                <Link 
+                  href="https://hoshuto-sugoroku.vercel.app/" 
+                  className="flex flex-col items-center p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+                >
+                  <span className="text-xl mb-2">🎲</span>
+                  <span className="text-sm font-medium text-gray-700">保守党すごろく</span>
+                </Link>
+                
+                <Link 
+                  href="/ArimotoMaker" 
+                  className="flex flex-col items-center p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+                >
+                  <span className="text-xl mb-2">🎯</span>
+                  <span className="text-sm font-medium text-gray-700">有本構文メーカー</span>
+                </Link>
+
+                <Link 
+                  href="https://hoshuto-sugoroku.vercel.app/party_name_app" 
+                  className="flex flex-col items-center p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+                >
+                  <span className="text-xl mb-2">🎤</span>
+                  <span className="text-sm font-medium text-gray-700">党名発表アプリ</span>
+                </Link>
+              </div>
+
+              <div className="text-center mt-8 text-sm text-gray-500">
+                <p>日本を豊かに、強く。</p>
+              </div>
+            </div>
+          </footer>
+        </>
       )}
 
       {/* ゲーム画面 */}
       {currentScreen === 'game' && (
-        <div className="fixed inset-0 bg-white z-10 flex flex-col items-center justify-start">
+        <div className="fixed inset-0 bg-white z-10 flex flex-col items-center justify-start pb-16">
           <div className="w-full max-w-md mx-auto flex flex-col h-full pt-2">
             <div className="flex justify-between items-center mb-2">
               <h1 className="text-xl font-bold text-gray-800 ml-4">CoCo壱ゲーム</h1>
