@@ -624,7 +624,7 @@ export default function CocoIchiGame() {
             return scores.map((score, index) => (
               <div key={score.id} className="flex justify-between items-center">
                 <span className="font-bold">{index + 1}. {score.name}</span>
-                <span className="text-green-600">{score.score.toLocaleString()}円</span>
+                <span className="text-green-600 tabular-nums">{score.score.toLocaleString()}円</span>
               </div>
             ));
           })()}
@@ -748,11 +748,11 @@ export default function CocoIchiGame() {
       {currentScreen === 'game' && (
         <div className="fixed inset-0 bg-white z-10 flex flex-col items-center justify-start">
           <div className="w-full max-w-md mx-auto flex flex-col h-full">
-            <div className="flex justify-between items-center mb-2 px-4 pt-2">
-              <h1 className="text-xl font-bold text-gray-800">CoCo壱ゲーム</h1>
+            <div className="flex justify-between items-center mb-2 px-4 pt-4 pb-2">
+              <h1 className="text-base font-bold text-gray-800">アンチ撃退！CoCo壱ゲーム</h1>
               <div className="flex items-center">
-                <span className="font-semibold mr-2">獲得賞金:</span>
-                <span className="text-green-600 font-bold text-xl">{score.toLocaleString()}円</span>
+                <span className="text-sm mr-2">獲得賞金:</span>
+                <span className="text-green-600 font-bold text-base">{score.toLocaleString()}円</span>
               </div>
             </div>
             
