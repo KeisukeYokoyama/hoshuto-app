@@ -44,20 +44,26 @@ const supabase = createClient(
 const isSameDay = (dateStr: string) => {
   const date = new Date(dateStr);
   const now = new Date();
+  const jstOffset = 9 * 60 * 60 * 1000; // 日本時間のオフセット（9時間）
   
-  return date.getFullYear() === now.getFullYear() &&
-         date.getMonth() === now.getMonth() &&
-         date.getDate() === now.getDate();
+  const jstDate = new Date(date.getTime() + jstOffset);
+  const jstNow = new Date(now.getTime() + jstOffset);
+  
+  return jstDate.getFullYear() === jstNow.getFullYear() &&
+         jstDate.getMonth() === jstNow.getMonth() &&
+         jstDate.getDate() === jstNow.getDate();
 };
 
 const isWithinLastWeek = (dateStr: string) => {
   const date = new Date(dateStr);
   const now = new Date();
-  const weekAgo = new Date(now);
-  weekAgo.setDate(weekAgo.getDate() - 7);
-  weekAgo.setHours(0, 0, 0, 0);
+  const jstOffset = 9 * 60 * 60 * 1000;
   
-  return date >= weekAgo;
+  const jstDate = new Date(date.getTime() + jstOffset);
+  const jstNow = new Date(now.getTime() + jstOffset);
+  const weekAgo = new Date(jstNow.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  return jstDate >= weekAgo;
 };
 
 export default function CocoIchiGame() {
@@ -433,26 +439,40 @@ export default function CocoIchiGame() {
       try {
         let data;
         let error;
-
+        const now = new Date();
+        const jstOffset = 9 * 60 * 60 * 1000;
+        const jstNow = new Date(now.getTime() + jstOffset);
+        
         switch (rankingType) {
           case 'daily':
+            const todayStart = new Date(jstNow);
+            todayStart.setHours(0, 0, 0, 0);
+            todayStart.setTime(todayStart.getTime() - jstOffset); // UTCに戻す
+            
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .gte('date', new Date().toISOString())
+              .gte('date', todayStart.toISOString())
               .order('score', { ascending: false })
               .limit(10));
             if (!error) setDailyScores(data || []);
             break;
+            
           case 'weekly':
+            const weekAgo = new Date(jstNow);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            weekAgo.setHours(0, 0, 0, 0);
+            weekAgo.setTime(weekAgo.getTime() - jstOffset); // UTCに戻す
+            
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .gte('date', new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000).toISOString())
+              .gte('date', weekAgo.toISOString())
               .order('score', { ascending: false })
               .limit(10));
             if (!error) setWeeklyScores(data || []);
             break;
+            
           case 'all':
             ({ data, error } = await supabase
               .from('scores')
