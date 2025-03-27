@@ -440,43 +440,46 @@ export default function CocoIchiGame() {
         let data;
         let error;
         
+        // 共通の変数を定義
+        const now = new Date();
+        const jstOffset = 9 * 60 * 60 * 1000;
+        
         switch (rankingType) {
           case 'daily':
             console.log('=== 本日のスコアデータ取得 ===');
             
-            // 日付フィルタを一時的に外して全データを取得
+            // 日本時間の今日の0時をUTCで表現
+            const todayStart = new Date(now.getTime() + jstOffset);
+            todayStart.setHours(0, 0, 0, 0);
+            const todayStartUTC = new Date(todayStart.getTime() - jstOffset);
+            
+            // 日本時間の明日の0時をUTCで表現
+            const tomorrowStart = new Date(todayStart);
+            tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+            const tomorrowStartUTC = new Date(tomorrowStart.getTime() - jstOffset);
+            
+            console.log('検索開始時刻 (UTC):', todayStartUTC.toISOString());
+            console.log('検索終了時刻 (UTC):', tomorrowStartUTC.toISOString());
+            
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .order('score', { ascending: false }));
+              .gte('date', todayStartUTC.toISOString())
+              .lt('date', tomorrowStartUTC.toISOString())
+              .order('score', { ascending: false })
+              .limit(10));
             
-            if (!error && data) {
-              console.log('=== 取得したすべてのスコア ===');
-              console.log('総件数:', data.length);
-              
-              // 日付でフィルタリング
-              const targetDate = '2025-03-27'; // 確認したい日付
-              
-              console.log('=== 2025-03-27のスコア ===');
-              const todayScores = data.filter(score => {
-                return score.date.startsWith(targetDate);
-              }).slice(0, 10); // 上位10件を取得
-              
-              console.log('本日のスコア件数:', todayScores.length);
-              todayScores.forEach(score => {
+            if (!error) {
+              console.log('取得したスコア件数:', data?.length || 0);
+              data?.forEach(score => {
                 console.log(`ID: ${score.id}, 名前: ${score.name}, スコア: ${score.score}, 日時: ${score.date}`);
               });
-              
-              setDailyScores(todayScores);
+              setDailyScores(data || []);
             }
             break;
             
           case 'weekly':
             console.log('=== 週間ランキングのデバッグ情報 ===');
-            
-            // 現在のUTC時刻を取得
-            const now = new Date();
-            const jstOffset = 9 * 60 * 60 * 1000;
             
             // 日本時間の7日前の0時をUTCで表現
             const weekAgo = new Date(now.getTime() + jstOffset);
