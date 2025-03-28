@@ -13,12 +13,20 @@ server.use(middlewares);
 
 // カスタムルートを追加
 server.get('/api/scores/daily', (req, res) => {
-  const today = getJSTDate(new Date());
-  today.setHours(0, 0, 0, 0);
+  // 現在のUTC日時を取得
+  const now = new Date();
+  
+  // UTCの今日の0時を設定
+  const todayUTC = new Date(now);
+  todayUTC.setUTCHours(0, 0, 0, 0);
+  
+  // UTCの明日の0時を設定
+  const tomorrowUTC = new Date(todayUTC);
+  tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
   
   const scores = db.scores.filter(score => {
     const scoreDate = new Date(score.date);
-    return scoreDate >= today;
+    return scoreDate >= todayUTC && scoreDate < tomorrowUTC;
   });
   
   res.json(scores.sort((a, b) => b.score - a.score).slice(0, 10));
