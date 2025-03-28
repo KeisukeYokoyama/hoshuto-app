@@ -440,26 +440,23 @@ export default function CocoIchiGame() {
         let data;
         let error;
         
-        // 共通の変数を定義
+        // 現在のUTC日時を取得
         const now = new Date();
-        const jstOffset = 9 * 60 * 60 * 1000;
         
         switch (rankingType) {
           case 'daily':
             console.log('=== 本日のスコアデータ取得 ===');
             
-            // 日本時間の今日の0時をUTCで表現
-            const todayStart = new Date(now.getTime() + jstOffset);
-            todayStart.setHours(0, 0, 0, 0);
-            const todayStartUTC = new Date(todayStart.getTime() - jstOffset);
+            // UTCの今日の0時を設定
+            const todayStartUTC = new Date(now);
+            todayStartUTC.setUTCHours(0, 0, 0, 0);
             
-            // 日本時間の明日の0時をUTCで表現
-            const tomorrowStart = new Date(todayStart);
-            tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-            const tomorrowStartUTC = new Date(tomorrowStart.getTime() - jstOffset);
+            // UTCの明日の0時を設定
+            const tomorrowStartUTC = new Date(todayStartUTC);
+            tomorrowStartUTC.setUTCDate(tomorrowStartUTC.getUTCDate() + 1);
             
-            console.log('検索開始時刻 (UTC):', todayStartUTC.toISOString());
-            console.log('検索終了時刻 (UTC):', tomorrowStartUTC.toISOString());
+            console.log('検索開始時刻:', todayStartUTC.toISOString());
+            console.log('検索終了時刻:', tomorrowStartUTC.toISOString());
             
             ({ data, error } = await supabase
               .from('scores')
@@ -481,11 +478,10 @@ export default function CocoIchiGame() {
           case 'weekly':
             console.log('=== 週間ランキングのデバッグ情報 ===');
             
-            // 日本時間の7日前の0時をUTCで表現
-            const weekAgo = new Date(now.getTime() + jstOffset);
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            weekAgo.setHours(0, 0, 0, 0);
-            const weekAgoUTC = new Date(weekAgo.getTime() - jstOffset);
+            // 7日前のUTC 0時を設定
+            const weekAgoUTC = new Date(now);
+            weekAgoUTC.setUTCDate(weekAgoUTC.getUTCDate() - 7);
+            weekAgoUTC.setUTCHours(0, 0, 0, 0);
             
             console.log('検索開始時刻 (UTC):', weekAgoUTC.toISOString());
             
@@ -560,21 +556,19 @@ export default function CocoIchiGame() {
           
           switch (rankingType) {
             case 'daily':
-              // 日本時間の今日の0時をUTCで表現
+              // 今日の0時（JST）
               const todayStart = new Date(jstNow);
               todayStart.setHours(0, 0, 0, 0);
-              const todayStartUTC = new Date(todayStart.getTime() - jstOffset);
               
-              // 日本時間の明日の0時をUTCで表現
+              // 明日の0時（JST）
               const tomorrowStart = new Date(todayStart);
               tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-              const tomorrowStartUTC = new Date(tomorrowStart.getTime() - jstOffset);
               
               ({ data, error } = await supabase
                 .from('scores')
                 .select('*')
-                .gte('date', todayStartUTC.toISOString())
-                .lt('date', tomorrowStartUTC.toISOString())
+                .gte('date', todayStart.toISOString())
+                .lt('date', tomorrowStart.toISOString())
                 .order('score', { ascending: false })
                 .limit(10));
               if (!error) setDailyScores(data || []);
