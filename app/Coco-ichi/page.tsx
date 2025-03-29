@@ -278,6 +278,8 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/teki15.jpg',
           '/images/Coco-ichi/teki16.jpg',
           '/images/Coco-ichi/teki17.jpg',
+          '/images/Coco-ichi/teki18.jpg',
+          '/images/Coco-ichi/teki19.jpg',         
         ];
         
         const allyImages = [
@@ -298,9 +300,11 @@ export default function CocoIchiGame() {
           '/images/Coco-ichi/mikata15.jpg',
           '/images/Coco-ichi/mikata16.jpg',
           '/images/Coco-ichi/mikata17.jpg',
+          '/images/Coco-ichi/mikata18.jpg',
+          '/images/Coco-ichi/mikata19.jpg',
         ];
 
-        const imageIndex = Math.floor(Math.random() * 17);
+        const imageIndex = Math.floor(Math.random() * 19);
         const image = isEnemy ? enemyImages[imageIndex] : allyImages[imageIndex];
         
         const newCharacter: Character = {
