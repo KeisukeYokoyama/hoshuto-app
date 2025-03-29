@@ -13,20 +13,18 @@ server.use(middlewares);
 
 // カスタムルートを追加
 server.get('/api/scores/daily', (req, res) => {
-  // 現在のUTC日時を取得
+  // 1. 現在の日本時間を取得
   const now = new Date();
+  const jstDate = new Date(now.getTime() + (9 * 60 * 60 * 1000));
   
-  // UTCの今日の0時を設定
-  const todayUTC = new Date(now);
-  todayUTC.setUTCHours(0, 0, 0, 0);
+  // 2. 日付文字列を取得 (YYYY-MM-DD形式)
+  const targetDate = jstDate.toISOString().split('T')[0];
   
-  // UTCの明日の0時を設定
-  const tomorrowUTC = new Date(todayUTC);
-  tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
-  
+  // 3. 日付でフィルタリング
   const scores = db.scores.filter(score => {
-    const scoreDate = new Date(score.date);
-    return scoreDate >= todayUTC && scoreDate < tomorrowUTC;
+    // スコアの日付部分のみを抽出
+    const scoreDate = new Date(score.date).toISOString().split('T')[0];
+    return scoreDate === targetDate;
   });
   
   res.json(scores.sort((a, b) => b.score - a.score).slice(0, 10));

@@ -447,22 +447,19 @@ export default function CocoIchiGame() {
           case 'daily':
             console.log('=== 本日のスコアデータ取得 ===');
             
-            // UTCの今日の0時を設定
-            const todayStartUTC = new Date(now);
-            todayStartUTC.setUTCHours(0, 0, 0, 0);
+            // 1. 現在の日本時間を取得
+            const jstDate = new Date(now.getTime() + (9 * 60 * 60 * 1000));
             
-            // UTCの明日の0時を設定
-            const tomorrowStartUTC = new Date(todayStartUTC);
-            tomorrowStartUTC.setUTCDate(tomorrowStartUTC.getUTCDate() + 1);
+            // 2. 日付文字列を取得 (YYYY-MM-DD形式)
+            const targetDate = jstDate.toISOString().split('T')[0];
             
-            console.log('検索開始時刻:', todayStartUTC.toISOString());
-            console.log('検索終了時刻:', tomorrowStartUTC.toISOString());
+            console.log('検索対象日付:', targetDate);
             
+            // 3. 日付でフィルタリング
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .gte('date', todayStartUTC.toISOString())
-              .lt('date', tomorrowStartUTC.toISOString())
+              .ilike('date', `${targetDate}%`) // YYYY-MM-DD で始まるデータを取得
               .order('score', { ascending: false })
               .limit(10));
             
