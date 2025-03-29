@@ -446,24 +446,31 @@ export default function CocoIchiGame() {
         switch (rankingType) {
           case 'daily':
             console.log('=== 本日のスコアデータ取得 ===');
-            
+
             // 1. 現在の日本時間を取得
             const jstDate = new Date(now.getTime() + (9 * 60 * 60 * 1000));
-            
-            // 2. 日付文字列を取得 (YYYY-MM-DD形式)
             const targetDate = jstDate.toISOString().split('T')[0];
-            
+
             console.log('検索対象日付:', targetDate);
+
+            // 検索範囲をセット（本日の0時から23:59:59まで）
+            const startDate = targetDate + 'T00:00:00+00:00';
+            const endDate = targetDate + 'T23:59:59+00:00';
             
-            // 3. 日付でフィルタリング
+            console.log('検索開始時刻:', startDate);
+            console.log('検索終了時刻:', endDate);
+            
             ({ data, error } = await supabase
               .from('scores')
               .select('*')
-              .ilike('date', `${targetDate}%`) // YYYY-MM-DD で始まるデータを取得
+              .gte('date', startDate)
+              .lt('date', endDate)
               .order('score', { ascending: false })
               .limit(10));
             
-            if (!error) {
+            if (error) {
+              console.error('クエリエラー:', error);
+            } else {
               console.log('取得したスコア件数:', data?.length || 0);
               data?.forEach(score => {
                 console.log(`ID: ${score.id}, 名前: ${score.name}, スコア: ${score.score}, 日時: ${score.date}`);

@@ -20,10 +20,9 @@ server.get('/api/scores/daily', (req, res) => {
   // 2. 日付文字列を取得 (YYYY-MM-DD形式)
   const targetDate = jstDate.toISOString().split('T')[0];
   
-  // 3. 日付でフィルタリング
+  // 3. 日付でフィルタリング（DBのデータは日本時間）
   const scores = db.scores.filter(score => {
-    // スコアの日付部分のみを抽出
-    const scoreDate = new Date(score.date).toISOString().split('T')[0];
+    const scoreDate = score.date.split('T')[0];  // 日付部分のみ抽出
     return scoreDate === targetDate;
   });
   
