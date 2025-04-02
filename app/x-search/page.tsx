@@ -2,6 +2,8 @@
 
 import { useState, ChangeEvent } from 'react';
 import { FaCalendar, FaCopy } from 'react-icons/fa';
+import { FaSquareXTwitter } from "react-icons/fa6";
+
 
 interface SearchFormData {
   // キーワード
@@ -17,7 +19,6 @@ interface SearchFormData {
   mentionAccount: string;
   
   // フィルター
-  language: string;
   hasReplies: {
     enabled: boolean;
     type: 'include' | 'exclusive';
@@ -56,7 +57,6 @@ export default function XSearch() {
     mentionAccount: '',
     
     // フィルター
-    language: '',
     hasReplies: {
       enabled: true,
       type: 'include'
@@ -113,29 +113,36 @@ export default function XSearch() {
       command += excludeWords.map(word => `-${word}`).join(' ') + ' ';
     }
 
-    if (formData.fromAccount) {
-      command += `from:${formData.fromAccount.replace('@', '')} `;
-    }
-
-    if (formData.toAccount) {
-      command += `to:${formData.toAccount.replace('@', '')} `;
-    }
-
-    if (formData.mentionAccount) {
-      command += `to:${formData.mentionAccount.replace('@', '')} `;
-    }
-
     if (formData.hashtags) {
       const tags = formData.hashtags.split(' ');
       command += tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ') + ' ';
     }
 
-    if (formData.hasReplies.enabled) {
-      command += formData.hasReplies.type === 'include' ? 'filter:replies ' : '-filter:replies ';
+    if (formData.fromAccount) {
+      command += `(from:${formData.fromAccount.replace('@', '')}) `;
     }
 
-    if (formData.hasLinks.enabled) {
-      command += formData.hasLinks.type === 'include' ? 'filter:links ' : '-filter:links ';
+    if (formData.toAccount) {
+      command += `(to:${formData.toAccount.replace('@', '')}) `;
+    }
+
+    if (formData.mentionAccount) {
+      const mention = formData.mentionAccount.startsWith('@') ? formData.mentionAccount : `@${formData.mentionAccount}`;
+      command += `(${mention}) `;
+    }
+
+    // 返信フィルター
+    if (!formData.hasReplies.enabled) {
+      command += '-filter:replies ';
+    } else if (formData.hasReplies.type === 'exclusive') {
+      command += 'filter:replies ';
+    }
+
+    // リンクフィルター
+    if (!formData.hasLinks.enabled) {
+      command += '-filter:links ';
+    } else if (formData.hasLinks.type === 'exclusive') {
+      command += 'filter:links ';
     }
 
     if (formData.minLikes) {
@@ -146,10 +153,6 @@ export default function XSearch() {
     }
     if (formData.minReplies) {
       command += `min_replies:${formData.minReplies} `;
-    }
-
-    if (formData.language) {
-      command += `lang:${formData.language} `;
     }
 
     if (formData.startYear && formData.startMonth && formData.startDay) {
@@ -206,28 +209,35 @@ export default function XSearch() {
     // アカウント関連
     if (formData.fromAccount) {
       query += query ? ' ' : '';
-      query += `from:${formData.fromAccount.replace('@', '')}`;
+      query += `(from:${formData.fromAccount.replace('@', '')})`;
     }
 
     if (formData.toAccount) {
       query += query ? ' ' : '';
-      query += `to:${formData.toAccount.replace('@', '')}`;
+      query += `(to:${formData.toAccount.replace('@', '')})`;
     }
 
     if (formData.mentionAccount) {
       query += query ? ' ' : '';
-      query += `@${formData.mentionAccount.replace('@', '')}`;
+      const mention = formData.mentionAccount.startsWith('@') ? formData.mentionAccount : `@${formData.mentionAccount}`;
+      query += `(${mention})`;
     }
 
     // フィルター
-    if (formData.hasReplies.enabled) {
+    if (!formData.hasReplies.enabled) {
       query += query ? ' ' : '';
-      query += formData.hasReplies.type === 'include' ? 'filter:replies' : '-filter:replies';
+      query += '-filter:replies';
+    } else if (formData.hasReplies.type === 'exclusive') {
+      query += query ? ' ' : '';
+      query += 'filter:replies';
     }
 
-    if (formData.hasLinks.enabled) {
+    if (!formData.hasLinks.enabled) {
       query += query ? ' ' : '';
-      query += formData.hasLinks.type === 'include' ? 'filter:links' : '-filter:links';
+      query += '-filter:links';
+    } else if (formData.hasLinks.type === 'exclusive') {
+      query += query ? ' ' : '';
+      query += 'filter:links';
     }
 
     // エンゲージメント
@@ -257,9 +267,6 @@ export default function XSearch() {
     // URLパラメータの作成
     const params = new URLSearchParams();
     params.append('q', query);
-    if (formData.language) {
-      params.append('lang', formData.language);
-    }
     params.append('src', 'typed_query');
 
     return `https://x.com/search?${params.toString()}`;
@@ -272,12 +279,26 @@ export default function XSearch() {
 
   return (
     <div className="container mx-auto p-4 max-w-lg pb-24">
-      <h1 className="text-xl font-bold mb-4 pb-4 border-b">高度な検索</h1>
+      <div className="flex items-center justify-between mb-4 pb-4">
+        <h1 className="text-xl font-semibold flex items-center">
+          <FaSquareXTwitter className="inline-block mr-1" />
+          高度な検索もどき
+        </h1>
+        <a
+          href="https://hoshuto-app.vercel.app"
+          className="text-sm px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-500 transition-colors"
+        >
+          <span className="text-red-500 mr-2">
+            ●
+          </span>
+          保守党アプリ
+        </a>
+      </div>
 
       <div className="space-y-6">
         {/* キーワード */}
         <div className="space-y-4">
-          <h2 className="font-semibold">キーワード</h2>
+          <h2 className="font-semibold text-lg">キーワード</h2>
           
           <div>
             <input
@@ -346,27 +367,9 @@ export default function XSearch() {
           </div>
         </div>
 
-        {/* 言語 */}
-        <div>
-          <h2 className="font-semibold mb-2">言語</h2>
-          <select
-            id="language"
-            name="language"
-            value={formData.language}
-            onChange={handleInputChange}
-            className="w-full px-3 py-4 border rounded-sm"
-          >
-            <option value="">すべての言語</option>
-            <option value="ja">日本語</option>
-            <option value="en">英語</option>
-            <option value="ko">韓国語</option>
-            <option value="zh">中国語</option>
-          </select>
-        </div>
-
         {/* アカウント */}
         <div className="space-y-4">
-          <h2 className="font-semibold">アカウント</h2>
+          <h2 className="font-semibold text-lg">アカウント</h2>
           
           <div>
             <input
@@ -410,7 +413,7 @@ export default function XSearch() {
 
         {/* フィルター */}
         <div className="space-y-4">
-          <h2 className="font-semibold">フィルター</h2>
+          <h2 className="font-semibold text-lg">フィルター</h2>
           
           {/* 返信 */}
           <div className="space-y-2">
@@ -439,6 +442,7 @@ export default function XSearch() {
                 <div className="flex items-center space-x-2">
                   <input
                     type="radio"
+                    id="repliesInclude"
                     name="repliesType"
                     checked={formData.hasReplies.type === 'include'}
                     onChange={() => setFormData(prev => ({
@@ -447,11 +451,12 @@ export default function XSearch() {
                     }))}
                     className="form-radio"
                   />
-                  <label className="text-sm">返信と元のポストを含める</label>
+                  <label htmlFor="repliesInclude" className="text-sm cursor-pointer">返信と元のポストを含める</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="radio"
+                    id="repliesExclusive"
                     name="repliesType"
                     checked={formData.hasReplies.type === 'exclusive'}
                     onChange={() => setFormData(prev => ({
@@ -460,7 +465,7 @@ export default function XSearch() {
                     }))}
                     className="form-radio"
                   />
-                  <label className="text-sm">返信のみ表示</label>
+                  <label htmlFor="repliesExclusive" className="text-sm cursor-pointer">返信のみ表示</label>
                 </div>
               </div>
             )}
@@ -493,6 +498,7 @@ export default function XSearch() {
                 <div className="flex items-center space-x-2">
                   <input
                     type="radio"
+                    id="linksInclude"
                     name="linksType"
                     checked={formData.hasLinks.type === 'include'}
                     onChange={() => setFormData(prev => ({
@@ -501,11 +507,12 @@ export default function XSearch() {
                     }))}
                     className="form-radio"
                   />
-                  <label className="text-sm">リンクを含むポストを含める</label>
+                  <label htmlFor="linksInclude" className="text-sm cursor-pointer">リンクを含むポストを含める</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <input
                     type="radio"
+                    id="linksExclusive"
                     name="linksType"
                     checked={formData.hasLinks.type === 'exclusive'}
                     onChange={() => setFormData(prev => ({
@@ -514,7 +521,7 @@ export default function XSearch() {
                     }))}
                     className="form-radio"
                   />
-                  <label className="text-sm">リンクを含むポストのみ表示</label>
+                  <label htmlFor="linksExclusive" className="text-sm cursor-pointer">リンクを含むポストのみ表示</label>
                 </div>
               </div>
             )}
@@ -523,7 +530,7 @@ export default function XSearch() {
 
         {/* エンゲージメント */}
         <div className="space-y-4">
-          <h2 className="font-semibold">エンゲージメント</h2>
+          <h2 className="font-semibold text-lg">エンゲージメント</h2>
           
           <div>
             <input
@@ -567,7 +574,7 @@ export default function XSearch() {
 
         {/* 日付 */}
         <div className="space-y-4 pb-20">
-          <h2 className="font-semibold">日付</h2>
+          <h2 className="font-semibold text-lg">日付</h2>
           
           <div>
             <label className="block text-sm text-gray-600 mb-2">次の日付以降</label>
