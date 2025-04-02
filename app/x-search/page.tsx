@@ -4,6 +4,36 @@ import { useState, ChangeEvent } from 'react';
 import { FaCalendar, FaCopy } from 'react-icons/fa';
 import { FaSquareXTwitter } from "react-icons/fa6";
 
+// GA4のイベント送信用の型定義
+declare global {
+  interface Window {
+    gtag: (
+      command: 'event',
+      action: string,
+      params: {
+        event_category?: string;
+        event_label?: string;
+        value?: number;
+        [key: string]: any;
+      }
+    ) => void;
+  }
+}
+
+// GA4イベント送信用のヘルパー関数
+const sendGAEvent = (
+  action: string,
+  params: {
+    event_category?: string;
+    event_label?: string;
+    value?: number;
+    [key: string]: any;
+  }
+) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', action, params);
+  }
+};
 
 interface SearchFormData {
   // キーワード
@@ -168,6 +198,11 @@ export default function XSearch() {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(generatedCommand);
+      // コピーボタンクリック時のイベント送信
+      sendGAEvent('click_copy_command', {
+        event_category: 'engagement',
+        event_label: generatedCommand
+      });
       alert('コピーしました！');
     } catch (err) {
       alert('コピーに失敗しました。');
@@ -274,7 +309,21 @@ export default function XSearch() {
 
   const handleSearch = () => {
     const searchUrl = generateSearchUrl();
+    // Xで検索ボタンクリック時のイベント送信
+    sendGAEvent('click_x_search', {
+      event_category: 'search',
+      event_label: generatedCommand || 'empty_query'
+    });
     window.open(searchUrl, '_blank');
+  };
+
+  const handleGenerateCommand = () => {
+    generateSearchCommand();
+    // 検索コマンド生成ボタンクリック時のイベント送信
+    sendGAEvent('click_generate_command', {
+      event_category: 'search',
+      event_label: 'generate_command'
+    });
   };
 
   return (
@@ -286,6 +335,10 @@ export default function XSearch() {
         </h1>
         <a
           href="https://hoshuto-app.vercel.app"
+          onClick={() => sendGAEvent('click_hoshuto_app', {
+            event_category: 'outbound',
+            event_label: 'hoshuto_app'
+          })}
           className="text-sm px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-500 transition-colors"
         >
           <span className="text-red-500 mr-2">
@@ -679,7 +732,7 @@ export default function XSearch() {
         <div className="container mx-auto max-w-lg">
           <div className="flex space-x-4">
             <button
-              onClick={generateSearchCommand}
+              onClick={handleGenerateCommand}
               className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-sm hover:bg-emerald-600 transition-colors"
             >
               検索コマンドを生成
