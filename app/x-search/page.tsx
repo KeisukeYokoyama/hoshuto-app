@@ -19,12 +19,12 @@ interface SearchFormData {
   // フィルター
   language: string;
   hasReplies: {
-    include: boolean;
-    exclusive: boolean;
+    enabled: boolean;
+    type: 'include' | 'exclusive';
   };
   hasLinks: {
-    include: boolean;
-    exclusive: boolean;
+    enabled: boolean;
+    type: 'include' | 'exclusive';
   };
   
   // エンゲージメント
@@ -58,12 +58,12 @@ export default function XSearch() {
     // フィルター
     language: '',
     hasReplies: {
-      include: false,
-      exclusive: false
+      enabled: true,
+      type: 'include'
     },
     hasLinks: {
-      include: false,
-      exclusive: false
+      enabled: true,
+      type: 'include'
     },
     
     // エンゲージメント
@@ -130,18 +130,12 @@ export default function XSearch() {
       command += tags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ') + ' ';
     }
 
-    if (formData.hasReplies.include) {
-      command += 'filter:replies ';
-    }
-    if (formData.hasReplies.exclusive) {
-      command += '-filter:replies ';
+    if (formData.hasReplies.enabled) {
+      command += formData.hasReplies.type === 'include' ? 'filter:replies ' : '-filter:replies ';
     }
 
-    if (formData.hasLinks.include) {
-      command += 'filter:links ';
-    }
-    if (formData.hasLinks.exclusive) {
-      command += '-filter:links ';
+    if (formData.hasLinks.enabled) {
+      command += formData.hasLinks.type === 'include' ? 'filter:links ' : '-filter:links ';
     }
 
     if (formData.minLikes) {
@@ -226,22 +220,14 @@ export default function XSearch() {
     }
 
     // フィルター
-    if (formData.hasReplies.include) {
+    if (formData.hasReplies.enabled) {
       query += query ? ' ' : '';
-      query += 'filter:replies';
-    }
-    if (formData.hasReplies.exclusive) {
-      query += query ? ' ' : '';
-      query += '-filter:replies';
+      query += formData.hasReplies.type === 'include' ? 'filter:replies' : '-filter:replies';
     }
 
-    if (formData.hasLinks.include) {
+    if (formData.hasLinks.enabled) {
       query += query ? ' ' : '';
-      query += 'filter:links';
-    }
-    if (formData.hasLinks.exclusive) {
-      query += query ? ' ' : '';
-      query += '-filter:links';
+      query += formData.hasLinks.type === 'include' ? 'filter:links' : '-filter:links';
     }
 
     // エンゲージメント
@@ -426,96 +412,112 @@ export default function XSearch() {
         <div className="space-y-4">
           <h2 className="font-semibold">フィルター</h2>
           
+          {/* 返信 */}
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">返信</span>
-              <div className="flex items-center space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasReplies"
-                    checked={!formData.hasReplies.include && !formData.hasReplies.exclusive}
-                    onChange={() => setFormData(prev => ({
-                      ...prev,
-                      hasReplies: { include: false, exclusive: false }
-                    }))}
-                    className="form-radio"
-                  />
-                  <span className="ml-2 text-sm">すべて</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasReplies"
-                    checked={formData.hasReplies.include}
-                    onChange={() => setFormData(prev => ({
-                      ...prev,
-                      hasReplies: { include: true, exclusive: false }
-                    }))}
-                    className="form-radio"
-                  />
-                  <span className="ml-2 text-sm">返信と元のポストを含める</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasReplies"
-                    checked={formData.hasReplies.exclusive}
-                    onChange={() => setFormData(prev => ({
-                      ...prev,
-                      hasReplies: { include: false, exclusive: true }
-                    }))}
-                    className="form-radio"
-                  />
-                  <span className="ml-2 text-sm">返信のみ表示</span>
-                </label>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">返信</span>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  hasReplies: { ...prev.hasReplies, enabled: !prev.hasReplies.enabled }
+                }))}
+                className={`${
+                  formData.hasReplies.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+              >
+                <span
+                  className={`${
+                    formData.hasReplies.enabled ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </button>
             </div>
+            
+            {formData.hasReplies.enabled && (
+              <div className="space-y-2 ml-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="repliesType"
+                    checked={formData.hasReplies.type === 'include'}
+                    onChange={() => setFormData(prev => ({
+                      ...prev,
+                      hasReplies: { ...prev.hasReplies, type: 'include' }
+                    }))}
+                    className="form-radio"
+                  />
+                  <label className="text-sm">返信と元のポストを含める</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="repliesType"
+                    checked={formData.hasReplies.type === 'exclusive'}
+                    onChange={() => setFormData(prev => ({
+                      ...prev,
+                      hasReplies: { ...prev.hasReplies, type: 'exclusive' }
+                    }))}
+                    className="form-radio"
+                  />
+                  <label className="text-sm">返信のみ表示</label>
+                </div>
+              </div>
+            )}
+          </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">リンク</span>
-              <div className="flex items-center space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasLinks"
-                    checked={!formData.hasLinks.include && !formData.hasLinks.exclusive}
-                    onChange={() => setFormData(prev => ({
-                      ...prev,
-                      hasLinks: { include: false, exclusive: false }
-                    }))}
-                    className="form-radio"
-                  />
-                  <span className="ml-2 text-sm">すべて</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasLinks"
-                    checked={formData.hasLinks.include}
-                    onChange={() => setFormData(prev => ({
-                      ...prev,
-                      hasLinks: { include: true, exclusive: false }
-                    }))}
-                    className="form-radio"
-                  />
-                  <span className="ml-2 text-sm">リンクを含むポストを含める</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasLinks"
-                    checked={formData.hasLinks.exclusive}
-                    onChange={() => setFormData(prev => ({
-                      ...prev,
-                      hasLinks: { include: false, exclusive: true }
-                    }))}
-                    className="form-radio"
-                  />
-                  <span className="ml-2 text-sm">リンクを含むポストのみ表示</span>
-                </label>
-              </div>
+          {/* リンク */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm">リンク</span>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  hasLinks: { ...prev.hasLinks, enabled: !prev.hasLinks.enabled }
+                }))}
+                className={`${
+                  formData.hasLinks.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+              >
+                <span
+                  className={`${
+                    formData.hasLinks.enabled ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                />
+              </button>
             </div>
+            
+            {formData.hasLinks.enabled && (
+              <div className="space-y-2 ml-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="linksType"
+                    checked={formData.hasLinks.type === 'include'}
+                    onChange={() => setFormData(prev => ({
+                      ...prev,
+                      hasLinks: { ...prev.hasLinks, type: 'include' }
+                    }))}
+                    className="form-radio"
+                  />
+                  <label className="text-sm">リンクを含むポストを含める</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    name="linksType"
+                    checked={formData.hasLinks.type === 'exclusive'}
+                    onChange={() => setFormData(prev => ({
+                      ...prev,
+                      hasLinks: { ...prev.hasLinks, type: 'exclusive' }
+                    }))}
+                    className="form-radio"
+                  />
+                  <label className="text-sm">リンクを含むポストのみ表示</label>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
