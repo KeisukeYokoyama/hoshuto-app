@@ -28,6 +28,11 @@ export default function Home() {
             保守党かるた
           </button>
         </Link>
+        <Link href="/x-search">
+          <button className="bg-gray-800 text-white px-4 py-2 rounded-md">
+            X 高度な検索もどき
+          </button>
+        </Link>
       </main>
     </div>
   );
