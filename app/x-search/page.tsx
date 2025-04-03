@@ -733,13 +733,13 @@ export default function XSearch() {
           <div className="flex space-x-4">
             <button
               onClick={handleGenerateCommand}
-              className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-sm hover:bg-emerald-600 transition-colors"
+              className="flex-1 bg-emerald-500 text-white py-3 px-4 rounded-md hover:bg-emerald-600 transition-colors"
             >
               検索コマンドを生成
             </button>
             <button
               onClick={handleSearch}
-              className="flex-1 bg-gray-800 text-white py-2 px-4 rounded-sm hover:bg-gray-600 transition-colors"
+              className="flex-1 bg-gray-800 text-white py-3 px-4 rounded-md hover:bg-gray-600 transition-colors"
             >
               Xで検索
             </button>
