@@ -14,15 +14,15 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: '/images/Coco-ichi/screen_image.jpg',
+        url: '/images/hoshuto-app-ogimage.png',
         width: 1200,
-        height: 630,
+        height: 729,
       }
     ],
   },
   twitter: {
     card: "summary_large_image",
-    images: ['/images/Coco-ichi/screen_image.jpg'],
+    images: ['/images/hoshuto-app-ogimage.png'],
   },
   metadataBase: new URL('https://hoshuto-app.vercel.app'),
   icons: {
